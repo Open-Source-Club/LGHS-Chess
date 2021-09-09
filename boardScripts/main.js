@@ -5,8 +5,7 @@ var game = new Chess()
 var $status = $('#status')
 var $fen = $('#fen')
 var $pgn = $('#pgn')
-let move = ''
-const turn = 'w'
+let move = null
 let moveConfirmed = false
 
 function onDragStart (source, piece, position, orientation) {
@@ -14,8 +13,9 @@ function onDragStart (source, piece, position, orientation) {
   if (game.game_over()) return false
 
   // only pick up pieces for the side to move
-  if ((turn === 'w' && piece.search(/^b/) !== -1) ||
-      (turn === 'b' && piece.search(/^w/) !== -1 || moveConfirmed === true)) {
+  if ((game.turn() === 'w' && piece.search(/^b/) !== -1) ||
+      (game.turn() === 'b' && piece.search(/^w/) !== -1) ||
+      (moveConfirmed === true || move != null)) {
     return false
   }
 }
@@ -89,9 +89,28 @@ const undoMove = () => {
     if (moveConfirmed === false)
         console.log(game.undo())
         board.position(game.fen())
+        move = null
 }
 
+const loadBoard = fen => {
+    game.load(fen)
+    if (game.turn() === 'b') board.flip();
+    board.position(game.fen())
+}
+
+const flipBoard = () => {
+    //pass
+}
+
+const logFen = () => console.log(game.fen())
+
+
+
 updateStatus()
+loadBoard("rnbqkbnr/pppppppp/8/8/2P5/8/PP1PPPPP/RNBQKBNR b KQkq c3 0 1")
+flipBoard()
+
 $('#confirmMove').on('click', confirmMove)
-$('#flip').on('click', board.flip)
+//$('#flip').on('click', board.flip)
 $('#undo').on('click', undoMove)
+$('#logFen').on('click', logFen)
