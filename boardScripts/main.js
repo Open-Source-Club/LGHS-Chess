@@ -6,6 +6,7 @@ var $status = $('#status')
 var $fen = $('#fen')
 var $pgn = $('#pgn')
 let move = ''
+const turn = 'w'
 
 function onDragStart (source, piece, position, orientation) {
   // do not pick up pieces if the game is over
@@ -17,7 +18,7 @@ function onDragStart (source, piece, position, orientation) {
     return false
   }
 }
-
+//.moves([ options ]) shows a list of all possible moves
 function onDrop (source, target) {
   // see if the move is legal
   move = game.move({
@@ -83,6 +84,12 @@ const test = () => {
     updateStatus()
 }
 
+const undoMove = () => {
+    console.log(game.undo())
+    board.position(game.fen())
+}
+
 updateStatus()
 $('#confirmMove').on('click', test)
 $('#flip').on('click', board.flip)
+$('#undo').on('click', undoMove)
