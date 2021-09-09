@@ -8,88 +8,88 @@ var $pgn = $('#pgn')
 let move = null
 let moveConfirmed = false
 
-function onDragStart (source, piece, position, orientation) {
-  // do not pick up pieces if the game is over
-  if (game.game_over()) return false
+function onDragStart(source, piece, position, orientation) {
+    // do not pick up pieces if the game is over
+    if (game.game_over()) return false
 
-  // only pick up pieces for the side to move
-  if ((game.turn() === 'w' && piece.search(/^b/) !== -1) ||
-      (game.turn() === 'b' && piece.search(/^w/) !== -1) ||
-      (moveConfirmed === true || move != null)) {
-    return false
-  }
+    // only pick up pieces for the side to move
+    if ((game.turn() === 'w' && piece.search(/^b/) !== -1) ||
+        (game.turn() === 'b' && piece.search(/^w/) !== -1) ||
+        (moveConfirmed === true || move != null)) {
+        return false
+    }
 }
-//.moves([ options ]) shows a list of all possible moves
-function onDrop (source, target) {
-  // see if the move is legal
-  move = game.move({
-    from: source,
-    to: target,
-    promotion: 'q' // NOTE: always promote to a queen for example simplicity
-  })
 
-  console.log(move)
+function onDrop(source, target) {
+    // see if the move is legal
+    move = game.move({
+        from: source,
+        to: target,
+        promotion: 'q' // NOTE: always promote to a queen for example simplicity
+    })
+
+    updateStatus()
 }
 
 // update the board position after the piece snap
 // for castling, en passant, pawn promotion
-function onSnapEnd () {
-  board.position(game.fen())
+function onSnapEnd() {
+    board.position(game.fen())
 }
 
-function updateStatus () {
-  var status = ''
+function updateStatus() {
+    var status = ''
 
-  var moveColor = 'White'
-  if (game.turn() === 'b') {
-    moveColor = 'Black'
-  }
-
-  // checkmate?
-  if (game.in_checkmate()) {
-    status = 'Game over, ' + moveColor + ' is in checkmate.'
-  }
-
-  // draw?
-  else if (game.in_draw()) {
-    status = 'Game over, drawn position'
-  }
-
-  // game still on
-  else {
-    status = moveColor + ' to move'
-
-    // check?
-    if (game.in_check()) {
-      status += ', ' + moveColor + ' is in check'
+    var moveColor = 'White'
+    if (game.turn() === 'b') {
+        moveColor = 'Black'
     }
-  }
 
-  $status.html(status)
-  $fen.html(game.fen())
-  $pgn.html(game.pgn())
+    // checkmate?
+    if (game.in_checkmate()) {
+        status = 'Game over, ' + moveColor + ' is in checkmate.'
+    }
+
+    // draw?
+    else if (game.in_draw()) {
+        status = 'Game over, drawn position'
+    }
+
+    // game still on
+    else {
+        status = moveColor + ' to move'
+
+        // check?
+        if (game.in_check()) {
+            status += ', ' + moveColor + ' is in check'
+        }
+    }
+
+    $status.html(status)
+    $fen.html(game.fen())
+    $pgn.html(game.pgn())
 }
 
 var config = {
-  draggable: true,
-  position: 'start',
-  onDragStart: onDragStart,
-  onDrop: onDrop,
-  onSnapEnd: onSnapEnd
+    draggable: true,
+    position: 'start',
+    onDragStart: onDragStart,
+    onDrop: onDrop,
+    onSnapEnd: onSnapEnd
 }
 board = Chessboard('myBoard', config)
 
 const confirmMove = () => {
     console.log(move)
     moveConfirmed = true;
-    updateStatus()
 }
 
 const undoMove = () => {
     if (moveConfirmed === false)
         console.log(game.undo())
-        board.position(game.fen())
-        move = null
+    board.position(game.fen())
+    move = null
+    updateStatus()
 }
 
 const loadBoard = fen => {
@@ -102,15 +102,10 @@ const flipBoard = () => {
     //pass
 }
 
-const logFen = () => console.log(game.fen())
-
-
-
 updateStatus()
-loadBoard("rnbqkbnr/pppppppp/8/8/2P5/8/PP1PPPPP/RNBQKBNR b KQkq c3 0 1")
+loadBoard("rnbqkbnr/pp1ppppp/8/2p5/2P5/8/PP1PPPPP/RNBQKBNR w KQkq c6 0 2")
 flipBoard()
 
 $('#confirmMove').on('click', confirmMove)
 //$('#flip').on('click', board.flip)
 $('#undo').on('click', undoMove)
-$('#logFen').on('click', logFen)
