@@ -7,14 +7,15 @@ var $fen = $('#fen')
 var $pgn = $('#pgn')
 let move = ''
 const turn = 'w'
+let moveConfirmed = false
 
 function onDragStart (source, piece, position, orientation) {
   // do not pick up pieces if the game is over
   if (game.game_over()) return false
 
   // only pick up pieces for the side to move
-  if ((game.turn() === 'w' && piece.search(/^b/) !== -1) ||
-      (game.turn() === 'b' && piece.search(/^w/) !== -1)) {
+  if ((turn === 'w' && piece.search(/^b/) !== -1) ||
+      (turn === 'b' && piece.search(/^w/) !== -1 || moveConfirmed === true)) {
     return false
   }
 }
@@ -78,18 +79,19 @@ var config = {
 }
 board = Chessboard('myBoard', config)
 
-const test = () => {
+const confirmMove = () => {
     console.log(move)
-    //if (move != null) console.log(move)
+    moveConfirmed = true;
     updateStatus()
 }
 
 const undoMove = () => {
-    console.log(game.undo())
-    board.position(game.fen())
+    if (moveConfirmed === false)
+        console.log(game.undo())
+        board.position(game.fen())
 }
 
 updateStatus()
-$('#confirmMove').on('click', test)
+$('#confirmMove').on('click', confirmMove)
 $('#flip').on('click', board.flip)
 $('#undo').on('click', undoMove)
