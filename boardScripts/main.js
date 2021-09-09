@@ -5,6 +5,7 @@ var game = new Chess()
 var $status = $('#status')
 var $fen = $('#fen')
 var $pgn = $('#pgn')
+let move = ''
 
 function onDragStart (source, piece, position, orientation) {
   // do not pick up pieces if the game is over
@@ -19,16 +20,13 @@ function onDragStart (source, piece, position, orientation) {
 
 function onDrop (source, target) {
   // see if the move is legal
-  var move = game.move({
+  move = game.move({
     from: source,
     to: target,
     promotion: 'q' // NOTE: always promote to a queen for example simplicity
   })
 
-  // illegal move
-  if (move === null) return 'snapback'
-
-  updateStatus()
+  console.log(move)
 }
 
 // update the board position after the piece snap
@@ -79,4 +77,12 @@ var config = {
 }
 board = Chessboard('myBoard', config)
 
+const test = () => {
+    console.log(move)
+    //if (move != null) console.log(move)
+    updateStatus()
+}
+
 updateStatus()
+$('#confirmMove').on('click', test)
+$('#flip').on('click', board.flip)
