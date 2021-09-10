@@ -98,14 +98,13 @@ const loadBoard = fen => {
     board.position(game.fen())
 }
 
-const flipBoard = () => {
-    //pass
+const tester = () => {
+    console.log('works')
 }
 
 updateStatus()
 loadBoard("rnbqkbnr/pp1ppppp/8/2p5/2P5/8/PP1PPPPP/RNBQKBNR w KQkq c6 0 2")
-flipBoard()
 
 $('#confirmMove').on('click', confirmMove)
-//$('#flip').on('click', board.flip)
 $('#undo').on('click', undoMove)
+$('#submit').on('click', tester)
