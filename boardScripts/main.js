@@ -7,6 +7,7 @@ var $fen = $('#fen')
 var $pgn = $('#pgn')
 let move = null
 let moveConfirmed = false
+var profile = null
 
 function onDragStart(source, piece, position, orientation) {
     // do not pick up pieces if the game is over
@@ -104,9 +105,18 @@ const postData = () => {
     xhr.setRequestHeader('Content-Type', 'application/json');
     
     xhr.send(JSON.stringify({
-        id: document.getElementById("idInput").value,
+        email: profile.getEmail(),
         fen: game.fen()
     }));
+    console.log('works')
+}
+
+function onSignIn(googleUser) {
+    profile = googleUser.getBasicProfile();
+    console.log('ID: ' + profile.getId()); // Do not send to your backend! Use an ID token instead.
+    console.log('Name: ' + profile.getName());
+    console.log('Image URL: ' + profile.getImageUrl());
+    console.log('Email: ' + profile.getEmail()); // This is null if the 'email' scope is not present.
 }
 
 updateStatus()
