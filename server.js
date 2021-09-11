@@ -2,7 +2,8 @@ const express = require('express');
 const port = 4200
 
 const app = express();
-app.use(express.urlencoded({extended : false}));
+//app.use(express.urlencoded({extended : false}));
+app.use(express.json())
 
 app.use(express.static('boardScripts'));
 app.use(express.static('boardDependencies/js'));
@@ -14,8 +15,7 @@ app.get('/', (req, res) => {
 });
 
 app.post('/', (req, res) => {
-    console.log(req.body.ID)
-    //send accepted or declined file
+    console.log(req.body)
     res.send({response: "accepted"});
 })
 
