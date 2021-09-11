@@ -98,14 +98,20 @@ const loadBoard = fen => {
     board.position(game.fen())
 }
 
-const flipBoard = () => {
-    //pass
+const postData = () => {
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "/", true);
+    xhr.setRequestHeader('Content-Type', 'application/json');
+    
+    xhr.send(JSON.stringify({
+        id: document.getElementById("idInput").value,
+        fen: game.fen()
+    }));
 }
 
 updateStatus()
 loadBoard("rnbqkbnr/pp1ppppp/8/2p5/2P5/8/PP1PPPPP/RNBQKBNR w KQkq c6 0 2")
-flipBoard()
 
 $('#confirmMove').on('click', confirmMove)
-//$('#flip').on('click', board.flip)
 $('#undo').on('click', undoMove)
+$('#sendData').on('click', postData)
