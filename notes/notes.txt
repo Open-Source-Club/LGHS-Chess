@@ -54,3 +54,7 @@ console.log(year + "-" + month + "-" + date + " " + hours + ":" + minutes + ":" 
 
 // prints time in HH:MM format
 console.log(hours + ":" + minutes);
+
+Send get request from within main.js file to get current board position
+
+Check move on server
