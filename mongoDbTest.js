@@ -21,7 +21,7 @@ async function find() {
 }
 
 async function find() {
-    const findResult = await collection.find({ moves }).toArray();
+    const findResult = await collection.find({email: 'stie4966@lgsstudent.org'}).toArray();
     for (const row of findResult) {
         console.log(row)
     }
@@ -63,11 +63,11 @@ async function findElem() {
 
     return 'done.';
 }
-/*
+
 find()
     .then(console.log)
     .catch(console.error)
-*/
+
 
 /*
 insert()
@@ -76,8 +76,9 @@ insert()
     .finally(() => client.close());
 */
 
-
+/*
 findElem()
     .then(console.log)
     .catch(console.error)
     .finally(() => client.close()); 
+ */

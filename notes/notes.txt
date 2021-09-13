@@ -55,6 +55,20 @@ console.log(year + "-" + month + "-" + date + " " + hours + ":" + minutes + ":" 
 // prints time in HH:MM format
 console.log(hours + ":" + minutes);
 
+
+
+
 Send get request from within main.js file to get current board position
 
 Check move on server
+
+
+
+
+db.users.update(
+        {email: 'stie4966@lgsstudent.org'},
+        { $addToSet: { tags: "poggers" } }
+    )
+
+if tags does not exist then it is created and poggers is added to it
+if tags does exist then poggers is added to it
