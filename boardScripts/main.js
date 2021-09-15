@@ -10,6 +10,7 @@ let moveConfirmed = false
 var profile = null
 
 function onDragStart(source, piece, position, orientation) {
+    document.body.style.overflow = 'hidden';
     // do not pick up pieces if the game is over
     if (game.game_over()) return false
 
@@ -29,6 +30,7 @@ function onDrop(source, target) {
         promotion: 'q' // NOTE: always promote to a queen for example simplicity
     })
 
+    document.body.style.overflow = 'visible';
     updateStatus()
 }
 
