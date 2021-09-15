@@ -1,5 +1,3 @@
-// NOTE: this example uses the chess.js library:
-// https://github.com/jhlywa/chess.js
 var board = null
 var game = new Chess()
 var $status = $('#status')
@@ -24,13 +22,17 @@ function onDragStart(source, piece, position, orientation) {
 
 function onDrop(source, target) {
     // see if the move is legal
+    document.body.style.overflow = 'visible';
+
     move = game.move({
         from: source,
         to: target,
         promotion: 'q' // NOTE: always promote to a queen for example simplicity
     })
 
-    document.body.style.overflow = 'visible';
+    if(move === null) return
+    console.log(move.from)
+    console.log(move.to)
     updateStatus()
 }
 
@@ -89,9 +91,10 @@ const confirmMove = () => {
 
 const undoMove = () => {
     if (moveConfirmed === false)
-        console.log(game.undo())
+        game.undo()
+        move = null
+        console.log(move);
     board.position(game.fen())
-    move = null
     updateStatus()
 }
 
@@ -102,22 +105,26 @@ const loadBoard = fen => {
 }
 
 const postData = () => {
+    if (move === null){console.log('No move'); return;}
+    
     var xhr = new XMLHttpRequest();
     xhr.open("POST", "/", true);
     xhr.setRequestHeader('Content-Type', 'application/json');
     
     xhr.send(JSON.stringify({
         email: profile.getEmail(),
-        fen: game.fen()
+        move: {
+            from: move.from,
+            to: move.to
+        }
+        //fen: game.fen()
     }));
     console.log('works')
 }
 
 function onSignIn(googleUser) {
     profile = googleUser.getBasicProfile();
-    console.log('ID: ' + profile.getId()); // Do not send to your backend! Use an ID token instead.
     console.log('Name: ' + profile.getName());
-    console.log('Image URL: ' + profile.getImageUrl());
     console.log('Email: ' + profile.getEmail()); // This is null if the 'email' scope is not present.
 }
 
