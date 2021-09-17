@@ -5,7 +5,8 @@ var $fen = $('#fen')
 var $pgn = $('#pgn')
 let move = null
 let moveConfirmed = false
-var profile = null
+//var profile = null
+let idToken = null;
 
 function onDragStart(source, piece, position, orientation) {
     document.body.style.overflow = 'hidden';
@@ -112,12 +113,11 @@ const postData = () => {
     xhr.setRequestHeader('Content-Type', 'application/json');
     
     xhr.send(JSON.stringify({
-        email: profile.getEmail(),
+        idToken: idToken,
         move: {
             from: move.from,
             to: move.to
         }
-        //fen: game.fen()
     }));
     console.log('works')
 }
@@ -126,6 +126,8 @@ function onSignIn(googleUser) {
     profile = googleUser.getBasicProfile();
     console.log('Name: ' + profile.getName());
     console.log('Email: ' + profile.getEmail()); // This is null if the 'email' scope is not present.
+    idToken = googleUser.getAuthResponse().id_token;
+    console.log(idToken)
 }
 
 updateStatus()
