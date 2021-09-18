@@ -1,5 +1,3 @@
-// NOTE: this example uses the chess.js library:
-// https://github.com/jhlywa/chess.js
 var board = null
 var game = new Chess()
 var $status = $('#status')
@@ -7,8 +5,11 @@ var $fen = $('#fen')
 var $pgn = $('#pgn')
 let move = null
 let moveConfirmed = false
+let idToken = null;
+let domain = null;
 
 function onDragStart(source, piece, position, orientation) {
+    document.body.style.overflow = 'hidden';
     // do not pick up pieces if the game is over
     if (game.game_over()) return false
 
@@ -22,12 +23,17 @@ function onDragStart(source, piece, position, orientation) {
 
 function onDrop(source, target) {
     // see if the move is legal
+    document.body.style.overflow = 'visible';
+
     move = game.move({
         from: source,
         to: target,
         promotion: 'q' // NOTE: always promote to a queen for example simplicity
     })
 
+    if(move === null) return
+    console.log(move.from)
+    console.log(move.to)
     updateStatus()
 }
 
@@ -86,9 +92,10 @@ const confirmMove = () => {
 
 const undoMove = () => {
     if (moveConfirmed === false)
-        console.log(game.undo())
+        game.undo()
+        move = null
+        console.log(move);
     board.position(game.fen())
-    move = null
     updateStatus()
 }
 
@@ -98,14 +105,37 @@ const loadBoard = fen => {
     board.position(game.fen())
 }
 
-const flipBoard = () => {
-    //pass
+const postData = () => {
+    if (move === null && domain != 'lgsstudent.org'){console.log('No move and not signed into school google account'); return;}
+    else if(move === null){console.log('No move'); return;}
+    else if(domain != 'lgsstudent.org'){console.log('Not student email'); return;}
+
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "/", true);
+    xhr.setRequestHeader('Content-Type', 'application/json');
+    
+    xhr.send(JSON.stringify({
+        idToken: idToken,
+        move: {
+            from: move.from,
+            to: move.to
+        }
+    }));
+    console.log('Sent Form Data')
+}
+
+function onSignIn(googleUser) {
+    idToken = googleUser.getAuthResponse().id_token;
+    profile = googleUser.getBasicProfile();
+    domain = profile.getEmail().split('@')[1]
+
+    console.log(domain)
+    console.log(idToken)
 }
 
 updateStatus()
 loadBoard("rnbqkbnr/pp1ppppp/8/2p5/2P5/8/PP1PPPPP/RNBQKBNR w KQkq c6 0 2")
-flipBoard()
 
 $('#confirmMove').on('click', confirmMove)
-//$('#flip').on('click', board.flip)
 $('#undo').on('click', undoMove)
+$('#sendData').on('click', postData)
