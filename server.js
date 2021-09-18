@@ -48,9 +48,7 @@ async function checkAndInsert(verifiedUser, move){
         return 'Inserted New User'
     }
 
-    for (let i = 0; i < user.moves.length; i++){
-        if (user.moves[i].dateTime.date === dateStr){return 'Already Moved Today';}
-    }
+    if (user.moves.at(-1).dateTime.date === dateStr){return 'Already Moved Today';}
 
     await collection.updateOne(
         {name: verifiedUser.name},
