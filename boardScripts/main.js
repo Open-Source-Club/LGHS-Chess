@@ -5,8 +5,8 @@ var $fen = $('#fen')
 var $pgn = $('#pgn')
 let move = null
 let moveConfirmed = false
-//var profile = null
 let idToken = null;
+let domain = null;
 
 function onDragStart(source, piece, position, orientation) {
     document.body.style.overflow = 'hidden';
@@ -106,8 +106,10 @@ const loadBoard = fen => {
 }
 
 const postData = () => {
-    if (move === null){console.log('No move'); return;}
-    
+    if (move === null && domain != 'lgsstudent.org'){console.log('No move and not signed into school google account'); return;}
+    else if(move === null){console.log('No move'); return;}
+    else if(domain != 'lgsstudent.org'){console.log('Not student email'); return;}
+
     var xhr = new XMLHttpRequest();
     xhr.open("POST", "/", true);
     xhr.setRequestHeader('Content-Type', 'application/json');
@@ -119,14 +121,15 @@ const postData = () => {
             to: move.to
         }
     }));
-    console.log('works')
+    console.log('Sent Form Data')
 }
 
 function onSignIn(googleUser) {
-    profile = googleUser.getBasicProfile();
-    console.log('Name: ' + profile.getName());
-    console.log('Email: ' + profile.getEmail()); // This is null if the 'email' scope is not present.
     idToken = googleUser.getAuthResponse().id_token;
+    profile = googleUser.getBasicProfile();
+    domain = profile.getEmail().split('@')[1]
+
+    console.log(domain)
     console.log(idToken)
 }
 

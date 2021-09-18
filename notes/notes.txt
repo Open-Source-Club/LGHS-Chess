@@ -67,8 +67,23 @@ Check move on server
 
 db.users.update(
         {email: 'stie4966@lgsstudent.org'},
-        { $addToSet: { tags: "poggers" } }
-    )
+        { $addToSet: { tags: "poggers" } },
+)
+
+db.users.update(
+         {email: 'stie4966@lgsstudent.org'},
+         { $addToSet: { tags: "poggers" } },
+         {upsert: true}
+)
+
+db.users.update({
+    email: 'stie4966@lgsstudent.org',
+    name: "Eric Still",
+    userId: 42068
+    },
+    {$addToSet: {tags: "poggers"}},
+    {upsert: true}
+)
 
 if tags does not exist then it is created and poggers is added to it
 if tags does exist then poggers is added to it
