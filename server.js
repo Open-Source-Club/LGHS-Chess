@@ -1,6 +1,7 @@
 const express = require('express');
 const { MongoClient } = require('mongodb');
 const { OAuth2Client } = require('google-auth-library');
+const { Chess } = require('chess.js')
 
 const port = 4200;
 const url = 'mongodb://localhost:27017';
@@ -18,6 +19,17 @@ app.use(express.static('boardDependencies/js'));
 app.use(express.static('boardDependencies/css'));
 app.use(express.static('boardDependencies/img/chesspieces/wikipedia'));
 
+let chess = null
+//{fen: "rnbqkbnr/pp1ppppp/8/2p5/2P5/3P4/PP2PPPP/RNBQKBNR b KQkq - 0 2", date: "9-21-2021"}
+async function loadBoard(){
+    const collection = db.collection('moves');
+    const movesResult = await collection.find().toArray();
+
+    chess = new Chess(movesResult.at(-1).fen);
+    console.log('Board position: ' + chess.fen())
+    
+}
+loadBoard()
 async function checkAndInsert(verifiedUser, move){
     if (verifiedUser.domain != 'lgsstudent.org'){return 'Not school email';}
 
@@ -81,6 +93,10 @@ async function verify(idToken) {
 
 app.get('/', (req, res) => {
     res.sendFile(__dirname + '/board.html');
+});
+
+app.get('/boardPosition', (req, res) => {
+    res.send({ fen: chess.fen() })
 });
 
 app.post('/', async (req, res) => {
