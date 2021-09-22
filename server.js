@@ -20,7 +20,7 @@ app.use(express.static('boardDependencies/css'));
 app.use(express.static('boardDependencies/img/chesspieces/wikipedia'));
 
 let chess = null
-//{fen: "rnbqkbnr/pp1ppppp/8/2p5/2P5/3P4/PP2PPPP/RNBQKBNR b KQkq - 0 2", date: "9-21-2021"}
+//{fen: "r1bqkbnr/pp1ppppp/2n5/2p5/2P5/2NP4/PP2PPPP/R1BQKBNR b KQkq - 2 3", date: "9-21-2021"}
 async function loadBoard(){
     const collection = db.collection('moves');
     const movesResult = await collection.find().toArray();
@@ -29,7 +29,7 @@ async function loadBoard(){
     console.log('Board position: ' + chess.fen())
     
 }
-loadBoard()
+
 async function checkAndInsert(verifiedUser, move){
     if (verifiedUser.domain != 'lgsstudent.org'){return 'Not school email';}
 
@@ -96,7 +96,7 @@ app.get('/', (req, res) => {
 });
 
 app.get('/boardPosition', (req, res) => {
-    res.send({ fen: chess.fen() })
+    res.send(chess.fen())
 });
 
 app.post('/', async (req, res) => {
@@ -108,6 +108,5 @@ app.post('/', async (req, res) => {
     res.send({ response: "accepted" });
 })
 
-
-
+loadBoard()
 app.listen(port, () => console.log(`This app is listening on port ${port}`));
