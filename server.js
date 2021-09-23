@@ -27,11 +27,20 @@ async function loadBoard(){
 
     chess = new Chess(movesResult.at(-1).fen);
     console.log('Board position: ' + chess.fen())
+}
+
+function verifyMove(validMoves, to){
+    for (let i = 0; i < validMoves.length; i++) {
+        if (validMoves[i].replace( /[A-Z]/, '') === to){return 'Valid'}
+    }
     
+    return 'Invaid'
 }
 
 async function checkAndInsert(verifiedUser, move){
-    if (verifiedUser.domain != 'lgsstudent.org'){return 'Not school email';}
+    if (verifiedUser === undefined){return 'Invalid OAuth Sign In'}
+    else if (verifiedUser.domain != 'lgsstudent.org'){return 'Not School Email';}
+    else if (verifyMove(chess.moves({ square: move.from}), move.to) != 'Valid'){return 'Invalid move'}
 
     const collection = db.collection('users');
 
@@ -60,7 +69,7 @@ async function checkAndInsert(verifiedUser, move){
         return 'Inserted New User'
     }
 
-    if (user.moves.at(-1).dateTime.date === dateStr){return 'Already Moved Today';}
+    else if (user.moves.at(-1).dateTime.date === dateStr){return 'Already Moved Today';}
 
     await collection.updateOne(
         {name: verifiedUser.name},
