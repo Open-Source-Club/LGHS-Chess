@@ -1,15 +1,14 @@
 const express = require('express');
-const { MongoClient } = require('mongodb');
+const mongo = require('mongodb').MongoClient;
 const { OAuth2Client } = require('google-auth-library');
 const { Chess } = require('chess.js')
 
 const port = 4200;
 const url = 'mongodb://localhost:27017';
-const mongoClient = new MongoClient(url);
+let mongoClient = null;
 const app = express();
-mongoClient.connect();
 
-const db = mongoClient.db('lghsChess');
+let db = null;
 app.use(express.json())
 
 const oAuthClient = new OAuth2Client("827009005158-s5ut8d54ieh17torhvh4emdgtdgv0ptj.apps.googleusercontent.com");
@@ -22,6 +21,13 @@ app.use(express.static('boardDependencies/img/chesspieces/wikipedia'));
 let chess = null
 //{fen: "r1bqkbnr/pp1ppppp/2n5/2p5/2P5/2NP4/PP2PPPP/R1BQKBNR b KQkq - 2 3", date: "9-21-2021"}
 async function loadBoard(){
+    
+    mongoClient = await mongo.connect(url,
+                                      {useUnifiedTopology: true,
+                                       useNewUrlParser: true
+                                    });
+    db = mongoClient.db('lghsChess');
+    
     const collection = db.collection('moves');
     const movesResult = await collection.find().toArray();
 
