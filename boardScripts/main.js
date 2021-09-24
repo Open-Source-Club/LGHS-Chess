@@ -83,7 +83,31 @@ var config = {
     onDrop: onDrop,
     onSnapEnd: onSnapEnd
 }
-board = Chessboard('myBoard', config)
+
+const loadBoard = () => {
+    var xhr = new XMLHttpRequest();
+    xhr.open("GET", "/boardPosition", true);
+    xhr.setRequestHeader('Content-Type', 'application/json');
+    xhr.send();
+
+    xhr.onload = () => {
+        console.log(xhr.response)
+
+        game.load(xhr.response)
+        turn = game.turn() === 'b'? 'black': 'white'
+        console.log(turn)
+
+        board = Chessboard('myBoard', {
+            draggable: true,
+            position: game.fen(),
+            orientation: turn,
+            onDragStart: onDragStart,
+            onDrop: onDrop,
+            onSnapEnd: onSnapEnd
+        })
+        updateStatus()
+    };
+}
 
 const confirmMove = () => {
     console.log(move)
@@ -97,12 +121,6 @@ const undoMove = () => {
         console.log(move);
     board.position(game.fen())
     updateStatus()
-}
-
-const loadBoard = fen => {
-    game.load(fen)
-    if (game.turn() === 'b') board.flip();
-    board.position(game.fen())
 }
 
 const postData = () => {
@@ -133,8 +151,7 @@ function onSignIn(googleUser) {
     console.log(idToken)
 }
 
-updateStatus()
-loadBoard("rnbqkbnr/pp1ppppp/8/2p5/2P5/8/PP1PPPPP/RNBQKBNR w KQkq c6 0 2")
+loadBoard()
 
 $('#confirmMove').on('click', confirmMove)
 $('#undo').on('click', undoMove)
