@@ -90,7 +90,7 @@ async function checkAndInsert(verifiedUser, move){
     return 'Inserted Move'
 }
 
-async function verify(idToken) {
+async function verifyOAuth(idToken) {
     const ticket = await oAuthClient.verifyIdToken({
         idToken: idToken,
         audience: "827009005158-s5ut8d54ieh17torhvh4emdgtdgv0ptj.apps.googleusercontent.com",
@@ -98,6 +98,15 @@ async function verify(idToken) {
     const payload = ticket.getPayload();
 
     return {email: payload['email'], domain: payload['hd'], name: payload['name'], userId: payload['sub']}
+}
+
+function verifyRequest(form){
+    try {
+        if (typeof form.idToken === 'string' && typeof form.move.from === 'string' && typeof form.move.to === 'string'){return 'Valid Request'}
+        else {return "Invalid Request"}
+    }
+    
+    catch (error) {return "Invalid Request"}
 }
 
 app.get('/', (req, res) => {
@@ -109,8 +118,15 @@ app.get('/boardPosition', (req, res) => {
 });
 
 app.post('/', async (req, res) => {
-    const verifiedUser = await verify(req.body.idToken).catch(console.error)
+    if (verifyRequest(req.body) != 'Valid Request'){
+        console.log('Invalid Request')
+        res.send({ response: "Invalid Request" })
+        return 'Invalid Request'
+    }
+
+    const verifiedUser = await verifyOAuth(req.body.idToken).catch(console.error)
     console.log(verifiedUser)
+
     const queryResult = await checkAndInsert(verifiedUser, req.body.move)
     console.log(queryResult)
 
