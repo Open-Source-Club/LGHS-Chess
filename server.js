@@ -109,6 +109,42 @@ function verifyRequest(form){
     catch (error) {return "Invalid Request"}
 }
 
+async function getFinalMove(){
+    const collection = db.collection('users');
+    const date = new Date()
+    const dateStr = `${date.getMonth()}-${date.getDate()}-${date.getFullYear()}`
+    
+    const votedUsers = await collection.find({
+        moves: {
+            $elemMatch: {
+                'dateTime.date': dateStr
+            }
+        }
+    }).toArray()
+    
+    let moveVotes = {}
+    for (user in votedUsers){
+        let moveStr = `${votedUsers[user].moves.at(-1).move.from},${votedUsers[user].moves.at(-1).move.to}`
+    
+        if (moveVotes.hasOwnProperty(moveStr)){moveVotes[moveStr] ++}
+        else {moveVotes[moveStr] = 1;}
+    }
+
+    let finalMove = `${votedUsers[0].moves.at(-1).move.from},${votedUsers[0].moves.at(-1).move.to}` //find move with highest votes
+    for (move in moveVotes){
+        if (moveVotes[move] > moveVotes[finalMove]){finalMove = move}
+    }
+
+    let equallyVoted = [] //check if any moves got the same ammount of votes
+    for (move in moveVotes){
+        if (moveVotes[move] === moveVotes[finalMove]){equallyVoted.push(move);}
+    }
+
+    if (equallyVoted.length > 1){finalMove = equallyVoted[Math.floor(Math.random() * equallyVoted.length)]}
+
+    return finalMove
+}
+
 app.get('/', (req, res) => {
     res.sendFile(__dirname + '/board.html');
 });
@@ -131,6 +167,13 @@ app.post('/', async (req, res) => {
     console.log(queryResult)
 
     res.send({ response: "accepted" });
+})
+
+app.post('/testPost', async (req, res) => {
+    const finalMove = await getFinalMove()
+    console.log(finalMove)
+
+    res.send({ response: "test" });
 })
 
 loadBoard()
