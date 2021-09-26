@@ -4,7 +4,7 @@ const { OAuth2Client } = require('google-auth-library');
 const { Chess } = require('chess.js')
 
 const port = 4200;
-const url = 'mongodb://localhost:27017';
+const url = 'mongodb://mongo:27017';
 let mongoClient = null;
 const app = express();
 
@@ -30,7 +30,7 @@ async function loadBoard(){
     
     const collection = db.collection('moves');
     const movesResult = await collection.find().toArray();
-
+    
     chess = new Chess(movesResult.at(-1).fen);
     console.log('Board position: ' + chess.fen())
 }
