@@ -124,9 +124,11 @@ const undoMove = () => {
 }
 
 const postData = () => {
-    if (move === null && !(domain === 'lgsstudent.org' || domain === 'gmail.com')){console.log('No move and not signed into school google account'); return;}
-    else if(move === null){console.log('No move'); return;}
-    else if(!(domain === 'lgsstudent.org' || domain === 'gmail.com')){console.log('Not student email'); return;}
+    if (move === null){return 'No Move'}
+    else if (!(domain === 'lgsstudent.org' || domain === 'gmail.com')){return 'Not Student Email'}
+
+    if (game.turn() === 'b' && domain != 'lgsstudent.org'){return "Not SHS's Turn"} // swapped w and b because this could only run after the user has moved thus changing the move to the opposite color
+    else if (game.turn() === 'w' && domain != 'gmail.com'){return "Not LGHS's Turn"}
 
     var xhr = new XMLHttpRequest();
     xhr.open("POST", "/", true);
@@ -139,7 +141,7 @@ const postData = () => {
             to: move.to
         }
     }));
-    console.log('Sent Form Data')
+    return 'Sent Form Data'
 }
 
 function onSignIn(googleUser) {
@@ -155,4 +157,4 @@ loadBoard()
 
 $('#confirmMove').on('click', confirmMove)
 $('#undo').on('click', undoMove)
-$('#sendData').on('click', postData)
+document.getElementById("sendData").onclick = function() {console.log(postData())}

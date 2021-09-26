@@ -25,13 +25,15 @@ async function loadBoard(){
     const collection = db.collection('moves');
     const movesResult = await collection.find().toArray();
 
+    if (movesResult.length === 0){chess = new Chess(); console.log('Loaded New Board'); return}
+
     chess = new Chess(movesResult.at(-1).fen);
-    console.log('Board position: ' + chess.fen())
+    console.log('Loaded Board: ' + chess.fen())
 }
 
 function verifyMove(validMoves, to){
-    for (let i = 0; i < validMoves.length; i++) {
-        if (validMoves[i].replace( /[A-Z]/, '') === to){return 'Valid'}
+    for (move in validMoves){
+        if (validMoves[move].replaceAll(/[A-Zx]/g, '') === to){return 'Valid'}
     }
     
     return 'Invaid'
@@ -51,7 +53,7 @@ async function checkAndInsert(verifiedUser, move){
         else {return `Not ${verifiedUser.domain}'s Turn`}
     }
     
-    if (verifyMove(chess.moves({ square: move.from}), move.to) != 'Valid'){return 'Invalid move'}
+    if (verifyMove(chess.moves({square: move.from}), move.to) != 'Valid'){return 'Invalid move'}
 
     const date = new Date()
     const dateStr = `${date.getMonth()}-${date.getDate()}-${date.getFullYear()}`
@@ -118,11 +120,13 @@ function verifyRequest(form){
     catch (error) {return "Invalid Request"}
 }
 
-async function getFinalMove(){
-    const collection = db.collection('lghsUsers');
+async function getFinalMove(){ //tally and execute
     const date = new Date()
     const dateStr = `${date.getMonth()}-${date.getDate()}-${date.getFullYear()}`
-    
+
+    let collection = null;
+    if (chess.turn() === 'w'){collection = db.collection('lghsUsers');}
+    else {collection = db.collection('shsUsers');}
     const votedUsers = await collection.find({
         moves: {
             $elemMatch: {
@@ -151,7 +155,11 @@ async function getFinalMove(){
 
     if (equallyVoted.length > 1){finalMove = equallyVoted[Math.floor(Math.random() * equallyVoted.length)]}
 
-    return finalMove
+    finalMove = finalMove.split(',')
+    const moveResult = chess.move({from: finalMove[0], to: finalMove[1], promotion: 'q'})
+    await db.collection('moves').insertOne({fen: chess.fen(), move: moveResult, date: dateStr})
+
+    return `Executed Move: ${finalMove}`
 }
 
 app.get('/', (req, res) => {
