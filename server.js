@@ -39,10 +39,19 @@ function verifyMove(validMoves, to){
 
 async function checkAndInsert(verifiedUser, move){
     if (verifiedUser === undefined){return 'Invalid OAuth Sign In'}
-    else if (verifiedUser.domain != 'lgsstudent.org'){return 'Not School Email';}
-    else if (verifyMove(chess.moves({ square: move.from}), move.to) != 'Valid'){return 'Invalid move'}
+    else if (!(verifiedUser.domain === 'lgsstudent.org' || verifiedUser.domain === undefined)){return 'Not School Email';}
 
-    const collection = db.collection('users');
+    let collection = null
+    if (chess.turn() === 'w'){
+        if (verifiedUser.domain === 'lgsstudent.org'){collection = db.collection('lghsUsers');}
+        else {return `Not ${verifiedUser.domain}'s Turn`}
+    }
+    else{
+        if (verifiedUser.domain === undefined){collection = db.collection('shsUsers');}
+        else {return `Not ${verifiedUser.domain}'s Turn`}
+    }
+    
+    if (verifyMove(chess.moves({ square: move.from}), move.to) != 'Valid'){return 'Invalid move'}
 
     const date = new Date()
     const dateStr = `${date.getMonth()}-${date.getDate()}-${date.getFullYear()}`
@@ -110,7 +119,7 @@ function verifyRequest(form){
 }
 
 async function getFinalMove(){
-    const collection = db.collection('users');
+    const collection = db.collection('lghsUsers');
     const date = new Date()
     const dateStr = `${date.getMonth()}-${date.getDate()}-${date.getFullYear()}`
     

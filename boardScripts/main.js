@@ -124,9 +124,9 @@ const undoMove = () => {
 }
 
 const postData = () => {
-    if (move === null && domain != 'lgsstudent.org'){console.log('No move and not signed into school google account'); return;}
+    if (move === null && !(domain === 'lgsstudent.org' || domain === 'gmail.com')){console.log('No move and not signed into school google account'); return;}
     else if(move === null){console.log('No move'); return;}
-    else if(domain != 'lgsstudent.org'){console.log('Not student email'); return;}
+    else if(!(domain === 'lgsstudent.org' || domain === 'gmail.com')){console.log('Not student email'); return;}
 
     var xhr = new XMLHttpRequest();
     xhr.open("POST", "/", true);
