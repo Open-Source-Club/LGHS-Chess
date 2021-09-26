@@ -16,5 +16,8 @@ COPY . .
 # Open port
 EXPOSE 4200
 
+# Specify container with mongo
+ENV DATABASE_HOST mongo
+
 # Start
 CMD [ "node", "server.js" ]
