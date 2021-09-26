@@ -4,11 +4,14 @@ const { OAuth2Client } = require('google-auth-library');
 const { Chess } = require('chess.js')
 
 const port = 4200;
-const url = 'mongodb://mongo:27017';
-let mongoClient = null;
+var mongoClient = null;
 const app = express();
 
-let db = null;
+// If we are running in a Docker container, adjust the hostname
+let dbHost = process.env.DATABASE_HOST || 'localhost';
+var url = 'mongodb://' + dbHost + ':27017';
+
+var db = null;
 app.use(express.json())
 
 const oAuthClient = new OAuth2Client("827009005158-s5ut8d54ieh17torhvh4emdgtdgv0ptj.apps.googleusercontent.com");
@@ -22,15 +25,15 @@ let chess = null
 //{fen: "r1bqkbnr/pp1ppppp/2n5/2p5/2P5/2NP4/PP2PPPP/R1BQKBNR b KQkq - 2 3", date: "9-21-2021"}
 async function loadBoard(){
     
-    mongoClient = await mongo.connect(url,
-                                      {useUnifiedTopology: true,
-                                       useNewUrlParser: true
-                                    });
-    db = mongoClient.db('lghsChess');
+    mongoClient = await mongo.connect(url, {
+                                      useUnifiedTopology: true,
+                                      useNewUrlParser: true
+                                     })
+    db = mongoClient.db('lghsChess')
     
     const collection = db.collection('moves');
     const movesResult = await collection.find().toArray();
-    
+
     chess = new Chess(movesResult.at(-1).fen);
     console.log('Board position: ' + chess.fen())
 }
@@ -96,7 +99,7 @@ async function checkAndInsert(verifiedUser, move){
     return 'Inserted Move'
 }
 
-async function verify(idToken) {
+async function verifyOAuth(idToken) {
     const ticket = await oAuthClient.verifyIdToken({
         idToken: idToken,
         audience: "827009005158-s5ut8d54ieh17torhvh4emdgtdgv0ptj.apps.googleusercontent.com",
@@ -104,6 +107,15 @@ async function verify(idToken) {
     const payload = ticket.getPayload();
 
     return {email: payload['email'], domain: payload['hd'], name: payload['name'], userId: payload['sub']}
+}
+
+function verifyRequest(form){
+    try {
+        if (typeof form.idToken === 'string' && typeof form.move.from === 'string' && typeof form.move.to === 'string'){return 'Valid Request'}
+        else {return "Invalid Request"}
+    }
+    
+    catch (error) {return "Invalid Request"}
 }
 
 app.get('/', (req, res) => {
@@ -115,8 +127,15 @@ app.get('/boardPosition', (req, res) => {
 });
 
 app.post('/', async (req, res) => {
-    const verifiedUser = await verify(req.body.idToken).catch(console.error)
+    if (verifyRequest(req.body) != 'Valid Request'){
+        console.log('Invalid Request')
+        res.send({ response: "Invalid Request" })
+        return 'Invalid Request'
+    }
+
+    const verifiedUser = await verifyOAuth(req.body.idToken).catch(console.error)
     console.log(verifiedUser)
+
     const queryResult = await checkAndInsert(verifiedUser, req.body.move)
     console.log(queryResult)
 
