@@ -2,6 +2,7 @@ const express = require('express');
 const { MongoClient } = require('mongodb');
 const { OAuth2Client } = require('google-auth-library');
 const { Chess } = require('chess.js')
+const favicon = require('serve-favicon');
 
 const port = 4200;
 const url = 'mongodb://localhost:27017';
@@ -11,6 +12,7 @@ mongoClient.connect();
 
 const db = mongoClient.db('lghsChess');
 app.use(express.json())
+app.use(favicon(__dirname + '/favicon.ico'));
 
 const oAuthClient = new OAuth2Client("827009005158-s5ut8d54ieh17torhvh4emdgtdgv0ptj.apps.googleusercontent.com");
 
@@ -31,9 +33,10 @@ async function loadBoard(){
     console.log('Loaded Board: ' + chess.fen())
 }
 
-function verifyMove(validMoves, to){
-    for (move in validMoves){
-        if (validMoves[move].replaceAll(/[A-Zx]/g, '') === to){return 'Valid'}
+function verifyMove(move){
+    const validMoves = chess.moves({square: move.from, verbose: true})
+    for (v in validMoves){
+        if (validMoves[v].to === move.to){return 'Valid'}
     }
     
     return 'Invaid'
@@ -52,8 +55,8 @@ async function checkAndInsert(verifiedUser, move){
         if (verifiedUser.domain === undefined){collection = db.collection('shsUsers');}
         else {return `Not ${verifiedUser.domain}'s Turn`}
     }
-    
-    if (verifyMove(chess.moves({square: move.from}), move.to) != 'Valid'){return 'Invalid move'}
+ 
+    if (verifyMove(move) != 'Valid'){return 'Invalid move'}
 
     const date = new Date()
     const dateStr = `${date.getMonth()}-${date.getDate()}-${date.getFullYear()}`
@@ -120,7 +123,7 @@ function verifyRequest(form){
     catch (error) {return "Invalid Request"}
 }
 
-async function getFinalMove(){ //tally and execute
+async function tallyMoves(){ //tally and execute
     const date = new Date()
     const dateStr = `${date.getMonth()}-${date.getDate()}-${date.getFullYear()}`
 
@@ -155,8 +158,12 @@ async function getFinalMove(){ //tally and execute
 
     if (equallyVoted.length > 1){finalMove = equallyVoted[Math.floor(Math.random() * equallyVoted.length)]}
 
-    finalMove = finalMove.split(',')
-    const moveResult = chess.move({from: finalMove[0], to: finalMove[1], promotion: 'q'})
+    return finalMove
+}
+
+async function executeMove(move){
+    move = move.split(',')
+    const moveResult = chess.move({from: move[0], to: move[1], promotion: 'q'})
     await db.collection('moves').insertOne({fen: chess.fen(), move: moveResult, date: dateStr})
 
     return `Executed Move: ${finalMove}`
@@ -180,14 +187,16 @@ app.post('/', async (req, res) => {
     const verifiedUser = await verifyOAuth(req.body.idToken).catch(console.error)
     console.log(verifiedUser)
 
-    const queryResult = await checkAndInsert(verifiedUser, req.body.move)
-    console.log(queryResult)
+    const result = await checkAndInsert(verifiedUser, req.body.move)
+    console.log(result)
 
-    res.send({ response: "accepted" });
+    if (!(result === 'Inserted New User' || result === 'Inserted Move')){res.status(405);}
+    res.send({response: result});
 })
 
 app.post('/testPost', async (req, res) => {
-    const finalMove = await getFinalMove()
+    const finalMove = await tallyAndExecute()
+
     console.log(finalMove)
 
     res.send({ response: "test" });
@@ -195,3 +204,7 @@ app.post('/testPost', async (req, res) => {
 
 loadBoard()
 app.listen(port, () => console.log(`This app is listening on port ${port}`));
+
+//scheduling for even days
+//cron.schedule('0 30 11 * * *', () => {tallyAndExecute(); console.log("Executed Move At " + new Date())});  //voting from 8:30 - 11-30
+//cron.schedule('0 35 14 * * *', () => {tallyAndExecute(); console.log("Executed Move At " + new Date())});  //voting from 11:30 - 2:45
