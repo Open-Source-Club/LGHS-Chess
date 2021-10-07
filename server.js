@@ -1,16 +1,18 @@
 const express = require('express');
-const { MongoClient } = require('mongodb');
+const mongo = require('mongodb').MongoClient;
 const { OAuth2Client } = require('google-auth-library');
 const { Chess } = require('chess.js')
 const favicon = require('serve-favicon');
 
 const port = 4200;
-const url = 'mongodb://localhost:27017';
-const mongoClient = new MongoClient(url);
+var mongoClient = null;
 const app = express();
-mongoClient.connect();
 
-const db = mongoClient.db('lghsChess');
+// If we are running in a Docker container, adjust the hostname
+let dbHost = process.env.DATABASE_HOST || 'localhost';
+var url = 'mongodb://' + dbHost + ':27017';
+
+var db = null;
 app.use(express.json())
 app.use(favicon(__dirname + '/favicon.ico'));
 
@@ -24,6 +26,13 @@ app.use(express.static('boardDependencies/img/chesspieces/wikipedia'));
 let chess = null
 //{fen: "r1bqkbnr/pp1ppppp/2n5/2p5/2P5/2NP4/PP2PPPP/R1BQKBNR b KQkq - 2 3", date: "9-21-2021"}
 async function loadBoard(){
+
+    mongoClient = await mongo.connect(url, {
+                                      useUnifiedTopology: true,
+                                      useNewUrlParser: true
+                                     })
+    db = mongoClient.db('lghsChess')
+
     const collection = db.collection('moves');
     const movesResult = await collection.find().toArray();
 
@@ -39,7 +48,7 @@ function verifyMove(move){
         if (validMoves[v].to === move.to){return 'Valid'}
     }
     
-    return 'Invaid'
+    return 'Invalid'
 }
 
 async function checkAndInsert(verifiedUser, move){
