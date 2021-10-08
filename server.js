@@ -1,16 +1,20 @@
 const express = require('express');
-const { MongoClient } = require('mongodb');
+const mongo = require('mongodb').MongoClient;
 const { OAuth2Client } = require('google-auth-library');
 const { Chess } = require('chess.js')
+const favicon = require('serve-favicon');
 
 const port = 4200;
-const url = 'mongodb://localhost:27017';
-const mongoClient = new MongoClient(url);
+var mongoClient = null;
 const app = express();
-mongoClient.connect();
 
-const db = mongoClient.db('lghsChess');
+// If we are running in a Docker container, adjust the hostname
+let dbHost = process.env.DATABASE_HOST || 'localhost';
+var url = 'mongodb://' + dbHost + ':27017';
+
+var db = null;
 app.use(express.json())
+app.use(favicon(__dirname + '/favicon.ico'));
 
 const oAuthClient = new OAuth2Client("827009005158-s5ut8d54ieh17torhvh4emdgtdgv0ptj.apps.googleusercontent.com");
 
@@ -22,27 +26,46 @@ app.use(express.static('boardDependencies/img/chesspieces/wikipedia'));
 let chess = null
 //{fen: "r1bqkbnr/pp1ppppp/2n5/2p5/2P5/2NP4/PP2PPPP/R1BQKBNR b KQkq - 2 3", date: "9-21-2021"}
 async function loadBoard(){
+
+    mongoClient = await mongo.connect(url, {
+                                      useUnifiedTopology: true,
+                                      useNewUrlParser: true
+                                     })
+    db = mongoClient.db('lghsChess')
+
     const collection = db.collection('moves');
     const movesResult = await collection.find().toArray();
 
+    if (movesResult.length === 0){chess = new Chess(); console.log('Loaded New Board'); return}
+
     chess = new Chess(movesResult.at(-1).fen);
-    console.log('Board position: ' + chess.fen())
+    console.log('Loaded Board: ' + chess.fen())
 }
 
-function verifyMove(validMoves, to){
-    for (let i = 0; i < validMoves.length; i++) {
-        if (validMoves[i].replace( /[A-Z]/, '') === to){return 'Valid'}
+function verifyMove(move){
+    const validMoves = chess.moves({square: move.from, verbose: true})
+    for (v in validMoves){
+        if (validMoves[v].to === move.to){return 'Valid'}
     }
     
-    return 'Invaid'
+    return 'Invalid'
 }
 
 async function checkAndInsert(verifiedUser, move){
     if (verifiedUser === undefined){return 'Invalid OAuth Sign In'}
-    else if (verifiedUser.domain != 'lgsstudent.org'){return 'Not School Email';}
-    else if (verifyMove(chess.moves({ square: move.from}), move.to) != 'Valid'){return 'Invalid move'}
+    else if (!(verifiedUser.domain === 'lgsstudent.org' || verifiedUser.domain === undefined)){return 'Not School Email';}
 
-    const collection = db.collection('users');
+    let collection = null
+    if (chess.turn() === 'w'){
+        if (verifiedUser.domain === 'lgsstudent.org'){collection = db.collection('lghsUsers');}
+        else {return `Not ${verifiedUser.domain}'s Turn`}
+    }
+    else{
+        if (verifiedUser.domain === undefined){collection = db.collection('shsUsers');}
+        else {return `Not ${verifiedUser.domain}'s Turn`}
+    }
+ 
+    if (verifyMove(move) != 'Valid'){return 'Invalid move'}
 
     const date = new Date()
     const dateStr = `${date.getMonth()}-${date.getDate()}-${date.getFullYear()}`
@@ -109,6 +132,52 @@ function verifyRequest(form){
     catch (error) {return "Invalid Request"}
 }
 
+async function tallyMoves(){ //tally and execute
+    const date = new Date()
+    const dateStr = `${date.getMonth()}-${date.getDate()}-${date.getFullYear()}`
+
+    let collection = null;
+    if (chess.turn() === 'w'){collection = db.collection('lghsUsers');}
+    else {collection = db.collection('shsUsers');}
+    const votedUsers = await collection.find({
+        moves: {
+            $elemMatch: {
+                'dateTime.date': dateStr
+            }
+        }
+    }).toArray()
+    
+    let moveVotes = {}
+    for (user in votedUsers){
+        let moveStr = `${votedUsers[user].moves.at(-1).move.from},${votedUsers[user].moves.at(-1).move.to}`
+    
+        if (moveVotes.hasOwnProperty(moveStr)){moveVotes[moveStr] ++}
+        else {moveVotes[moveStr] = 1;}
+    }
+
+    let finalMove = `${votedUsers[0].moves.at(-1).move.from},${votedUsers[0].moves.at(-1).move.to}` //find move with highest votes
+    for (move in moveVotes){
+        if (moveVotes[move] > moveVotes[finalMove]){finalMove = move}
+    }
+
+    let equallyVoted = [] //check if any moves got the same ammount of votes
+    for (move in moveVotes){
+        if (moveVotes[move] === moveVotes[finalMove]){equallyVoted.push(move);}
+    }
+
+    if (equallyVoted.length > 1){finalMove = equallyVoted[Math.floor(Math.random() * equallyVoted.length)]}
+
+    return finalMove
+}
+
+async function executeMove(move){
+    move = move.split(',')
+    const moveResult = chess.move({from: move[0], to: move[1], promotion: 'q'})
+    await db.collection('moves').insertOne({fen: chess.fen(), move: moveResult, date: dateStr})
+
+    return `Executed Move: ${finalMove}`
+}
+
 app.get('/', (req, res) => {
     res.sendFile(__dirname + '/board.html');
 });
@@ -127,11 +196,24 @@ app.post('/', async (req, res) => {
     const verifiedUser = await verifyOAuth(req.body.idToken).catch(console.error)
     console.log(verifiedUser)
 
-    const queryResult = await checkAndInsert(verifiedUser, req.body.move)
-    console.log(queryResult)
+    const result = await checkAndInsert(verifiedUser, req.body.move)
+    console.log(result)
 
-    res.send({ response: "accepted" });
+    if (!(result === 'Inserted New User' || result === 'Inserted Move')){res.status(405);}
+    res.send({response: result});
+})
+
+app.post('/testPost', async (req, res) => {
+    const finalMove = await tallyAndExecute()
+
+    console.log(finalMove)
+
+    res.send({ response: "test" });
 })
 
 loadBoard()
 app.listen(port, () => console.log(`This app is listening on port ${port}`));
+
+//scheduling for even days
+//cron.schedule('0 30 11 * * *', () => {tallyAndExecute(); console.log("Executed Move At " + new Date())});  //voting from 8:30 - 11-30
+//cron.schedule('0 35 14 * * *', () => {tallyAndExecute(); console.log("Executed Move At " + new Date())});  //voting from 11:30 - 2:45

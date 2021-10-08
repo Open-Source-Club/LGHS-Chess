@@ -1,0 +1,16 @@
+version: "3"
+services:
+  chess-server:
+    container_name: chess-server
+    image: lghs-chess
+    restart: always
+    build: .
+    ports:
+      - "4200:4200"
+    links:
+      - mongo
+  mongo:
+    container_name: mongo
+    image: mongo
+    volumes:
+      - ./mongo/data:/data/db
