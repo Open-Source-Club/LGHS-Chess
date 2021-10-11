@@ -24,6 +24,7 @@ app.use(express.static('boardDependencies/css'));
 app.use(express.static('boardDependencies/img/chesspieces/wikipedia'));
 
 let chess = null
+let pendingMove = []
 //{fen: "r1bqkbnr/pp1ppppp/2n5/2p5/2P5/2NP4/PP2PPPP/R1BQKBNR b KQkq - 2 3", date: "9-21-2021"}
 async function loadBoard(){
 
@@ -167,15 +168,16 @@ async function tallyMoves(){ //tally and execute
 
     if (equallyVoted.length > 1){finalMove = equallyVoted[Math.floor(Math.random() * equallyVoted.length)]}
 
-    return finalMove
+    pendingMove = [finalMove, dateStr]
 }
 
-async function executeMove(move){
-    move = move.split(',')
+async function executeMove(){
+    move = pendingMove[0].split(',')
     const moveResult = chess.move({from: move[0], to: move[1], promotion: 'q'})
-    await db.collection('moves').insertOne({fen: chess.fen(), move: moveResult, date: dateStr})
+    await db.collection('moves').insertOne({fen: chess.fen(), move: moveResult, date: pendingMove[1]})
 
-    return `Executed Move: ${finalMove}`
+    pendingMove = []
+    return `Executed Move: ${move}`
 }
 
 app.get('/', (req, res) => {
@@ -200,15 +202,15 @@ app.post('/', async (req, res) => {
     console.log(result)
 
     if (!(result === 'Inserted New User' || result === 'Inserted Move')){res.status(405);}
-    res.send({response: result});
+    res.send(result);
 })
 
 app.post('/testPost', async (req, res) => {
-    const finalMove = await tallyAndExecute()
+    await tallyMoves()
+    const response = await executeMove()
 
-    console.log(finalMove)
-
-    res.send({ response: "test" });
+    console.log(response)
+    res.send(response);
 })
 
 loadBoard()

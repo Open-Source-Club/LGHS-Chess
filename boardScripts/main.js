@@ -99,6 +99,11 @@ const postData = () => {
         }
     }));
 
+    xhr.onload = () => {
+        console.log(xhr.status)
+        console.log(xhr.response)
+    };
+
     return 'Sent Form Data'
 }
 
@@ -113,4 +118,5 @@ function onSignIn(googleUser) {
 loadBoard()
 $('#confirmMove').on('click', confirmMove)
 $('#undo').on('click', undoMove)
-$('#sendData').on('click', postData)
+//$('#sendData').on('click', postData)
+document.getElementById("sendData").onclick = function (){console.log(postData())}
