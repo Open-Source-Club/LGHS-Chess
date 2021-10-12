@@ -4,6 +4,8 @@ const { OAuth2Client } = require('google-auth-library');
 const { Chess } = require('chess.js')
 const favicon = require('serve-favicon');
 
+const OAuthId = "801666125404-bdn8r27m3d7ngriifuodeq7ajnc17kjl.apps.googleusercontent.com"
+
 const port = 4200;
 var mongoClient = null;
 const app = express();
@@ -16,7 +18,7 @@ var db = null;
 app.use(express.json())
 app.use(favicon(__dirname + '/favicon.ico'));
 
-const oAuthClient = new OAuth2Client("801666125404-bdn8r27m3d7ngriifuodeq7ajnc17kjl.apps.googleusercontent.com");
+const oAuthClient = new OAuth2Client(OAuthId);
 
 app.use(express.static('boardScripts'));
 app.use(express.static('boardDependencies/js'));
@@ -117,7 +119,7 @@ async function checkAndInsert(verifiedUser, move){
 async function verifyOAuth(idToken) {
     const ticket = await oAuthClient.verifyIdToken({
         idToken: idToken,
-        audience: "827009005158-s5ut8d54ieh17torhvh4emdgtdgv0ptj.apps.googleusercontent.com",
+        audience: OAuthId,
     });
     const payload = ticket.getPayload();
 
