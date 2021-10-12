@@ -16,7 +16,7 @@ var db = null;
 app.use(express.json())
 app.use(favicon(__dirname + '/favicon.ico'));
 
-const oAuthClient = new OAuth2Client("827009005158-s5ut8d54ieh17torhvh4emdgtdgv0ptj.apps.googleusercontent.com");
+const oAuthClient = new OAuth2Client("801666125404-bdn8r27m3d7ngriifuodeq7ajnc17kjl.apps.googleusercontent.com");
 
 app.use(express.static('boardScripts'));
 app.use(express.static('boardDependencies/js'));
