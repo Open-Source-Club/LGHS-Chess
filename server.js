@@ -29,11 +29,7 @@ let chess = null
 let pendingMove = []
 //{fen: "r1bqkbnr/pp1ppppp/2n5/2p5/2P5/2NP4/PP2PPPP/R1BQKBNR b KQkq - 2 3", date: "9-21-2021"}
 async function loadBoard(){
-
-    mongoClient = await mongo.connect(url, {
-                                      useUnifiedTopology: true,
-                                      useNewUrlParser: true
-                                     })
+    mongoClient = await mongo.connect(url, {useUnifiedTopology: true, useNewUrlParser: true})
     db = mongoClient.db('lghsChess')
 
     const collection = db.collection('moves');
@@ -219,5 +215,6 @@ loadBoard()
 app.listen(port, () => console.log(`This app is listening on port ${port}`));
 
 //scheduling for even days
-//cron.schedule('0 30 11 * * *', () => {tallyAndExecute(); console.log("Executed Move At " + new Date())});  //voting from 8:30 - 11-30
-//cron.schedule('0 35 14 * * *', () => {tallyAndExecute(); console.log("Executed Move At " + new Date())});  //voting from 11:30 - 2:45
+//cron.schedule('0 30 11 * * *', () => {await tallyMoves(); await executeMove(); console.log("Executed Move At " + new Date())}); //Tally and execute white move at 11:30
+//cron.schedule('0 35 14 * * *', () => {await tallyMoves(); console.log("Executed Move At " + new Date())}); //voting from 11:30 - 2:45 //Tally black move at 2:45
+//cron.schedule('0 35 8 * * *', () => {await executeMove(); console.log("Executed Move At " + new Date())}); //voting from 11:30 - 2:45 //Execute black move at 8:30 the next day

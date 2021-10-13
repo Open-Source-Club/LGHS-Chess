@@ -81,6 +81,7 @@ const undoMove = () => {
 }
 
 const postData = () => {
+    if (moveConfirmed === true){return 'Already Moved'}
     if (move === null){return 'No Move'}
     else if (!(domain === 'lgsstudent.org' || domain === 'gmail.com')){return 'Not Student Email'}
 
@@ -102,6 +103,16 @@ const postData = () => {
     xhr.onload = () => {
         console.log(xhr.status)
         console.log(xhr.response)
+        if (xhr.status === 200){
+            $('#response').html(xhr.response).css({"color": "green", "font-size": "125%"})
+            moveConfirmed = true;
+            console.log(move)
+        }
+        else{
+            $('#response').html(xhr.response).css({"color": "red", "font-size": "125%"})
+            moveConfirmed = true;
+            console.log(move)
+        }
     };
 
     return 'Sent Form Data'
@@ -119,4 +130,9 @@ loadBoard()
 $('#confirmMove').on('click', confirmMove)
 $('#undo').on('click', undoMove)
 //$('#sendData').on('click', postData)
-document.getElementById("sendData").onclick = function (){console.log(postData())}
+document.getElementById("sendData").onclick = function (){
+    result = postData()
+    if (result != 'Sent Form Data'){
+        $('#response').html(result).css({"color": "orange", "font-size": "125%"})
+    }
+}
