@@ -96,3 +96,13 @@ console.log('Email: ' + profile.getEmail()); // This is null if the 'email' scop
 
 var count = Object.keys(myObject).length;
 Count elements in json object ^
+
+app.get('/boardPosition', (req, res) => {
+    res.send({fen: chess.fen(), turn: chess.turn()})
+});
+
+response = JSON.parse(xhr.response)
+        chess = new Chess(response.fen)
+        turn = response.turn === 'w' ? 'white' : 'black'
+
+JSON parsing example

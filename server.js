@@ -187,35 +187,35 @@ async function executeMove(){
 
 function userWebhook(name, move, date, color){
     const data = {
+        "username": "Test User",
         embeds: [{
             title: `${name}'s Move`,
-            url: "https://google.com",
+            url: `http://localhost:4200/boardView?name=${name}&from=${move.from}&to=${move.to}`.split(" ").join(""),
             color: color,
             fields: [
-              {
-                "name": "From",
-                "value": move.from,
-                "inline": true
-              },
-              {
-                "name": "To",
-                "value": move.to,
-                "inline": true
-              }
+                {
+                    "name": "From",
+                    "value": move.from,
+                    "inline": true
+                },
+                {
+                    "name": "To",
+                    "value": move.to,
+                    "inline": true
+                }
             ],
             "timestamp": date
-          }],
-        "username": "Test User"
-      }
+        }]
+    }
 
     axios
-      .post(userWebhookUrl, data)
-      .then(res => {
+        .post(userWebhookUrl, data)
+        .then(res => {
         console.log(`statusCode: ${res.status}`)
-      })
-      .catch(error => {
+        })
+        .catch(error => {
         console.error(error)
-      })
+        })
 }
 
 app.get('/', (req, res) => {
@@ -224,6 +224,10 @@ app.get('/', (req, res) => {
 
 app.get('/boardPosition', (req, res) => {
     res.send(chess.fen())
+});
+
+app.get('/boardView', (req, res) => {
+    res.sendFile(__dirname + '/boardView.html');
 });
 
 app.post('/', async (req, res) => {
