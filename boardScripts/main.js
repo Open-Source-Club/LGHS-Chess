@@ -81,8 +81,9 @@ const undoMove = () => {
 }
 
 const postData = () => {
-    if (moveConfirmed === true){return 'Already Moved'}
+    if (moveConfirmed === true){return 'Already Moved Today'}
     if (move === null){return 'No Move'}
+    if (domain === null){return "Not Signed In"}
     else if (!(domain === 'lgsstudent.org' || domain === 'gmail.com')){return 'Not Student Email'}
 
     if (chess.turn() === 'b' && domain != 'lgsstudent.org'){return "Not SHS's Turn"} // swapped w and b because this could only run after the user has moved thus changing the move to the opposite color
@@ -133,6 +134,6 @@ $('#undo').on('click', undoMove)
 document.getElementById("sendData").onclick = function (){
     result = postData()
     if (result != 'Sent Form Data'){
-        $('#response').html(result).css({"color": "orange", "font-size": "125%"})
+        $('#response').html(result).css({"color": "red", "font-size": "125%"})
     }
 }

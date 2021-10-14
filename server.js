@@ -3,8 +3,11 @@ const mongo = require('mongodb').MongoClient;
 const { OAuth2Client } = require('google-auth-library');
 const { Chess } = require('chess.js')
 const favicon = require('serve-favicon');
+const axios = require('axios')
 
 const OAuthId = "801666125404-bdn8r27m3d7ngriifuodeq7ajnc17kjl.apps.googleusercontent.com"
+const userWebhookUrl = 'https://discord.com/api/webhooks/898002048660963349/UFLsplp92OjrGnyYB6XykDkG3AeO3wP9qreJFR4CXwpVBCZAqfUVoNuehbVrD2zhDIPo'
+const moveWebhookUrl = 'https://discord.com/api/webhooks/898002513394040832/n8jthPgUiZiW6ou9mDUoOIC-pikV-H55A5aTSuU93kvV210jj0ZbfoR7T2w6e7_HlyKz'
 
 const port = 4200;
 var mongoClient = null;
@@ -55,19 +58,23 @@ async function checkAndInsert(verifiedUser, move){
     else if (!(verifiedUser.domain === 'lgsstudent.org' || verifiedUser.domain === undefined)){return 'Not School Email';}
 
     let collection = null
+    let color = null
     if (chess.turn() === 'w'){
+        color = 0xfe5002
         if (verifiedUser.domain === 'lgsstudent.org'){collection = db.collection('lghsUsers');}
         else {return `Not ${verifiedUser.domain}'s Turn`}
     }
     else{
+        color = 0xc72027
         if (verifiedUser.domain === undefined){collection = db.collection('shsUsers');}
         else {return `Not ${verifiedUser.domain}'s Turn`}
     }
- 
+    console.log(color)
     if (verifyMove(move) != 'Valid'){return 'Invalid move'}
-
+    
     const date = new Date()
     const dateStr = `${date.getMonth()}-${date.getDate()}-${date.getFullYear()}`
+    const hours = date.getHours()
 
     const user = await collection.findOne({email: verifiedUser.email});
 
@@ -79,7 +86,7 @@ async function checkAndInsert(verifiedUser, move){
             moves: [{
                 dateTime: {
                     date: dateStr,
-                    time: date.getHours()
+                    time: hours
                 },
                 move: {
                     from: move.from,
@@ -87,7 +94,7 @@ async function checkAndInsert(verifiedUser, move){
                 } 
             }]
         })
-
+        userWebhook(verifiedUser.name, move, date, color)
         return 'Inserted New User'
     }
 
@@ -176,6 +183,39 @@ async function executeMove(){
 
     pendingMove = []
     return `Executed Move: ${move}`
+}
+
+function userWebhook(name, move, date, color){
+    const data = {
+        embeds: [{
+            title: `${name}'s Move`,
+            url: "https://google.com",
+            color: color,
+            fields: [
+              {
+                "name": "From",
+                "value": move.from,
+                "inline": true
+              },
+              {
+                "name": "To",
+                "value": move.to,
+                "inline": true
+              }
+            ],
+            "timestamp": date
+          }],
+        "username": "Test User"
+      }
+
+    axios
+      .post(userWebhookUrl, data)
+      .then(res => {
+        console.log(`statusCode: ${res.status}`)
+      })
+      .catch(error => {
+        console.error(error)
+      })
 }
 
 app.get('/', (req, res) => {
