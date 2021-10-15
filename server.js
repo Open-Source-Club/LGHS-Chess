@@ -94,7 +94,7 @@ async function checkAndInsert(verifiedUser, move){
                 } 
             }]
         })
-        userWebhook(verifiedUser.name, move, date, color)
+        userWebhook(verifiedUser.name, move, date, dateStr, color)
         return 'Inserted New User'
     }
 
@@ -116,6 +116,7 @@ async function checkAndInsert(verifiedUser, move){
         } 
     })
 
+    userWebhook(verifiedUser.name, move, date, dateStr, color)
     return 'Inserted Move'
 }
 
@@ -185,12 +186,12 @@ async function executeMove(){
     return `Executed Move: ${move}`
 }
 
-function userWebhook(name, move, date, color){
+function userWebhook(name, move, date, dateStr, color){
     const data = {
-        "username": "Test User",
+        "username": name,
         embeds: [{
             title: `${name}'s Move`,
-            url: `http://localhost:4200/boardView?name=${name}&from=${move.from}&to=${move.to}`.split(" ").join(""),
+            url: `http://localhost:4200/boardView?name=${name}&date=${dateStr}&from=${move.from}&to=${move.to}&fen=${chess.fen()}`.split(" ").join("$"),
             color: color,
             fields: [
                 {
