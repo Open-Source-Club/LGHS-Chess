@@ -32,23 +32,6 @@ console.log(from)
 console.log(to)
 console.log(fen)
 
-document.getElementById("userBoardName").innerHTML = `${userName}'s' Move`;
-document.getElementById("currentBoardDate").innerHTML = `Board for ${date}`;
-
-textWidth = document.getElementById("currentBoardDate").offsetWidth
-
-console.log(textWidth)
-const styles = `
-    .boardText{
-        margin-right: ${400 - textWidth + 5}px;
-    }
-`
-
-let styleSheet = document.createElement("style")
-styleSheet.type = "text/css"
-styleSheet.innerText = styles
-document.head.appendChild(styleSheet)
-
 let xhr = new XMLHttpRequest();
 xhr.open("GET", "/boardPosition", true);
 xhr.setRequestHeader('Content-Type', 'application/json');
@@ -64,9 +47,41 @@ currentBoard = Chessboard('currentBoard', {
     orientation: turn,
 })
 
-chess.move({ from: from, to: to })
-userBoard = Chessboard('userBoard', {
-    draggable: false,
-    position: chess.fen(),
-    orientation: turn,
-})
+document.getElementById("currentBoardDate").innerHTML = `Board for ${date}`;
+if (userName != null){
+    const newDiv = document.createElement("div");
+    newDiv.id = "userBoard";
+    newDiv.className= "small-board";
+    
+    const currentDiv = document.getElementById("currentBoard");
+    currentDiv.parentNode.insertBefore(newDiv, currentDiv.nextSibling);
+
+    chess.move({ from: from, to: to })
+    userBoard = Chessboard('userBoard', {
+        draggable: false,
+        position: chess.fen(),
+        orientation: turn,
+    })
+
+    const newH1 = document.createElement("h1");
+    newH1.innerHTML = `${userName}'s' Move`
+    newH1.id = "userBoardName";
+    newH1.className= "boardText";
+
+    const currentH1 = document.getElementById("currentBoardDate");
+    currentH1.parentNode.insertBefore(newH1, currentH1.nextSibling);
+    
+    textWidth = document.getElementById("currentBoardDate").offsetWidth
+    console.log(textWidth)
+
+    const styles = `
+        .boardText{
+            margin-right: ${400 - textWidth + 5}px;
+        }
+    `
+
+    let styleSheet = document.createElement("style")
+    styleSheet.type = "text/css"
+    styleSheet.innerText = styles
+    document.head.appendChild(styleSheet)
+}
