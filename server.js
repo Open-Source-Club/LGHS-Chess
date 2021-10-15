@@ -3,6 +3,11 @@ const mongo = require('mongodb').MongoClient;
 const { OAuth2Client } = require('google-auth-library');
 const { Chess } = require('chess.js')
 const favicon = require('serve-favicon');
+const axios = require('axios')
+
+const OAuthId = "801666125404-bdn8r27m3d7ngriifuodeq7ajnc17kjl.apps.googleusercontent.com"
+const userWebhookUrl = 'https://discord.com/api/webhooks/898002048660963349/UFLsplp92OjrGnyYB6XykDkG3AeO3wP9qreJFR4CXwpVBCZAqfUVoNuehbVrD2zhDIPo'
+const moveWebhookUrl = 'https://discord.com/api/webhooks/898002513394040832/n8jthPgUiZiW6ou9mDUoOIC-pikV-H55A5aTSuU93kvV210jj0ZbfoR7T2w6e7_HlyKz'
 
 const port = 4200;
 var mongoClient = null;
@@ -16,7 +21,7 @@ var db = null;
 app.use(express.json())
 app.use(favicon(__dirname + '/favicon.ico'));
 
-const oAuthClient = new OAuth2Client("827009005158-s5ut8d54ieh17torhvh4emdgtdgv0ptj.apps.googleusercontent.com");
+const oAuthClient = new OAuth2Client(OAuthId);
 
 app.use(express.static('boardScripts'));
 app.use(express.static('boardDependencies/js'));
@@ -24,13 +29,10 @@ app.use(express.static('boardDependencies/css'));
 app.use(express.static('boardDependencies/img/chesspieces/wikipedia'));
 
 let chess = null
+let pendingMove = []
 //{fen: "r1bqkbnr/pp1ppppp/2n5/2p5/2P5/2NP4/PP2PPPP/R1BQKBNR b KQkq - 2 3", date: "9-21-2021"}
 async function loadBoard(){
-
-    mongoClient = await mongo.connect(url, {
-                                      useUnifiedTopology: true,
-                                      useNewUrlParser: true
-                                     })
+    mongoClient = await mongo.connect(url, {useUnifiedTopology: true, useNewUrlParser: true})
     db = mongoClient.db('lghsChess')
 
     const collection = db.collection('moves');
@@ -56,19 +58,23 @@ async function checkAndInsert(verifiedUser, move){
     else if (!(verifiedUser.domain === 'lgsstudent.org' || verifiedUser.domain === undefined)){return 'Not School Email';}
 
     let collection = null
+    let color = null
     if (chess.turn() === 'w'){
+        color = 0xfe5002
         if (verifiedUser.domain === 'lgsstudent.org'){collection = db.collection('lghsUsers');}
         else {return `Not ${verifiedUser.domain}'s Turn`}
     }
     else{
+        color = 0xc72027
         if (verifiedUser.domain === undefined){collection = db.collection('shsUsers');}
         else {return `Not ${verifiedUser.domain}'s Turn`}
     }
- 
+    console.log(color)
     if (verifyMove(move) != 'Valid'){return 'Invalid move'}
-
+    
     const date = new Date()
     const dateStr = `${date.getMonth()}-${date.getDate()}-${date.getFullYear()}`
+    const hours = date.getHours()
 
     const user = await collection.findOne({email: verifiedUser.email});
 
@@ -80,7 +86,7 @@ async function checkAndInsert(verifiedUser, move){
             moves: [{
                 dateTime: {
                     date: dateStr,
-                    time: date.getHours()
+                    time: hours
                 },
                 move: {
                     from: move.from,
@@ -88,7 +94,7 @@ async function checkAndInsert(verifiedUser, move){
                 } 
             }]
         })
-
+        userWebhook(verifiedUser.name, move, date, dateStr, color)
         return 'Inserted New User'
     }
 
@@ -110,13 +116,14 @@ async function checkAndInsert(verifiedUser, move){
         } 
     })
 
+    userWebhook(verifiedUser.name, move, date, dateStr, color)
     return 'Inserted Move'
 }
 
 async function verifyOAuth(idToken) {
     const ticket = await oAuthClient.verifyIdToken({
         idToken: idToken,
-        audience: "827009005158-s5ut8d54ieh17torhvh4emdgtdgv0ptj.apps.googleusercontent.com",
+        audience: OAuthId,
     });
     const payload = ticket.getPayload();
 
@@ -167,15 +174,49 @@ async function tallyMoves(){ //tally and execute
 
     if (equallyVoted.length > 1){finalMove = equallyVoted[Math.floor(Math.random() * equallyVoted.length)]}
 
-    return finalMove
+    pendingMove = [finalMove, dateStr]
 }
 
-async function executeMove(move){
-    move = move.split(',')
+async function executeMove(){
+    move = pendingMove[0].split(',')
     const moveResult = chess.move({from: move[0], to: move[1], promotion: 'q'})
-    await db.collection('moves').insertOne({fen: chess.fen(), move: moveResult, date: dateStr})
+    await db.collection('moves').insertOne({fen: chess.fen(), move: moveResult, date: pendingMove[1]})
 
-    return `Executed Move: ${finalMove}`
+    pendingMove = []
+    return `Executed Move: ${move}`
+}
+
+function userWebhook(name, move, date, dateStr, color){
+    const data = {
+        "username": name,
+        embeds: [{
+            title: `${name}'s Move`,
+            url: `http://localhost:4200/boardView?name=${name}&date=${dateStr}&from=${move.from}&to=${move.to}&fen=${chess.fen()}`.split(" ").join("$"),
+            color: color,
+            fields: [
+                {
+                    "name": "From",
+                    "value": move.from,
+                    "inline": true
+                },
+                {
+                    "name": "To",
+                    "value": move.to,
+                    "inline": true
+                }
+            ],
+            "timestamp": date
+        }]
+    }
+
+    axios
+        .post(userWebhookUrl, data)
+        .then(res => {
+        console.log(`statusCode: ${res.status}`)
+        })
+        .catch(error => {
+        console.error(error)
+        })
 }
 
 app.get('/', (req, res) => {
@@ -184,6 +225,10 @@ app.get('/', (req, res) => {
 
 app.get('/boardPosition', (req, res) => {
     res.send(chess.fen())
+});
+
+app.get('/boardView', (req, res) => {
+    res.sendFile(__dirname + '/boardView.html');
 });
 
 app.post('/', async (req, res) => {
@@ -200,20 +245,21 @@ app.post('/', async (req, res) => {
     console.log(result)
 
     if (!(result === 'Inserted New User' || result === 'Inserted Move')){res.status(405);}
-    res.send({response: result});
+    res.send(result);
 })
 
 app.post('/testPost', async (req, res) => {
-    const finalMove = await tallyAndExecute()
+    await tallyMoves()
+    const response = await executeMove()
 
-    console.log(finalMove)
-
-    res.send({ response: "test" });
+    console.log(response)
+    res.send(response);
 })
 
 loadBoard()
 app.listen(port, () => console.log(`This app is listening on port ${port}`));
 
 //scheduling for even days
-//cron.schedule('0 30 11 * * *', () => {tallyAndExecute(); console.log("Executed Move At " + new Date())});  //voting from 8:30 - 11-30
-//cron.schedule('0 35 14 * * *', () => {tallyAndExecute(); console.log("Executed Move At " + new Date())});  //voting from 11:30 - 2:45
+//cron.schedule('0 30 11 * * *', () => {await tallyMoves(); await executeMove(); console.log("Executed Move At " + new Date())}); //Tally and execute white move at 11:30
+//cron.schedule('0 35 14 * * *', () => {await tallyMoves(); console.log("Executed Move At " + new Date())}); //voting from 11:30 - 2:45 //Tally black move at 2:45
+//cron.schedule('0 35 8 * * *', () => {await executeMove(); console.log("Executed Move At " + new Date())}); //voting from 11:30 - 2:45 //Execute black move at 8:30 the next day

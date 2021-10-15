@@ -81,7 +81,9 @@ const undoMove = () => {
 }
 
 const postData = () => {
+    if (moveConfirmed === true){return 'Already Moved Today'}
     if (move === null){return 'No Move'}
+    if (domain === null){return "Not Signed In"}
     else if (!(domain === 'lgsstudent.org' || domain === 'gmail.com')){return 'Not Student Email'}
 
     if (chess.turn() === 'b' && domain != 'lgsstudent.org'){return "Not SHS's Turn"} // swapped w and b because this could only run after the user has moved thus changing the move to the opposite color
@@ -99,6 +101,21 @@ const postData = () => {
         }
     }));
 
+    xhr.onload = () => {
+        console.log(xhr.status)
+        console.log(xhr.response)
+        if (xhr.status === 200){
+            $('#response').html(xhr.response).css({"color": "green", "font-size": "125%"})
+            moveConfirmed = true;
+            console.log(move)
+        }
+        else{
+            $('#response').html(xhr.response).css({"color": "red", "font-size": "125%"})
+            moveConfirmed = true;
+            console.log(move)
+        }
+    };
+
     return 'Sent Form Data'
 }
 
@@ -113,4 +130,10 @@ function onSignIn(googleUser) {
 loadBoard()
 $('#confirmMove').on('click', confirmMove)
 $('#undo').on('click', undoMove)
-$('#sendData').on('click', postData)
+//$('#sendData').on('click', postData)
+document.getElementById("sendData").onclick = function (){
+    result = postData()
+    if (result != 'Sent Form Data'){
+        $('#response').html(result).css({"color": "red", "font-size": "125%"})
+    }
+}
