@@ -33,7 +33,7 @@ function onSnapEnd() {
 
 function updateStatus() {
     let status = ''
-    school = chess.turn() === 'w'? 'LGHS': 'SHS'
+    school = chess.turn() === 'w' ? 'LGHS': 'SHS'
 
     if (chess.in_checkmate()) {status = `Game Over, ${school} Is In Checkmate.`}
     else if (chess.in_draw()) {status = 'Game Over, Draw'}
@@ -86,8 +86,8 @@ const postData = () => {
     if (domain === null){return "Not Signed In"}
     else if (!(domain === 'lgsstudent.org' || domain === 'gmail.com')){return 'Not Student Email'}
 
-    if (chess.turn() === 'b' && domain != 'lgsstudent.org'){return "Not SHS's Turn"} // swapped w and b because this could only run after the user has moved thus changing the move to the opposite color
-    else if (chess.turn() === 'w' && domain != 'gmail.com'){return "Not LGHS's Turn"}
+    if (chess.turn() === 'b' && domain != 'lgsstudent.org'){return "Not SHS Account"} // swapped w and b because this could only run after the user has moved thus changing the move to the opposite color
+    else if (chess.turn() === 'w' && domain != 'gmail.com'){return "Not LGHS Account"}
 
     let xhr = new XMLHttpRequest();
     xhr.open("POST", "/", true);

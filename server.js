@@ -14,7 +14,7 @@ var mongoClient = null;
 const app = express();
 
 // If we are running in a Docker container, adjust the hostname
-let dbHost = process.env.DATABASE_HOST || 'localhost';
+const dbHost = process.env.DATABASE_HOST || 'localhost';
 var url = 'mongodb://' + dbHost + ':27017';
 
 var db = null;
@@ -58,18 +58,15 @@ async function checkAndInsert(verifiedUser, move){
     else if (!(verifiedUser.domain === 'lgsstudent.org' || verifiedUser.domain === undefined)){return 'Not School Email';}
 
     let collection = null
-    let color = null
     if (chess.turn() === 'w'){
-        color = 0xfe5002
         if (verifiedUser.domain === 'lgsstudent.org'){collection = db.collection('lghsUsers');}
-        else {return `Not ${verifiedUser.domain}'s Turn`}
+        else {return `Not ${verifiedUser.domain} Account`}
     }
     else{
-        color = 0xc72027
         if (verifiedUser.domain === undefined){collection = db.collection('shsUsers');}
-        else {return `Not ${verifiedUser.domain}'s Turn`}
+        else {return `Not ${verifiedUser.domain} Account`}
     }
-    console.log(color)
+
     if (verifyMove(move) != 'Valid'){return 'Invalid move'}
     
     const date = new Date()
@@ -94,7 +91,7 @@ async function checkAndInsert(verifiedUser, move){
                 } 
             }]
         })
-        userWebhook(verifiedUser.name, move, date, dateStr, color)
+        userWebhook(verifiedUser.name, move)
         return 'Inserted New User'
     }
 
@@ -116,7 +113,7 @@ async function checkAndInsert(verifiedUser, move){
         } 
     })
 
-    userWebhook(verifiedUser.name, move, date, dateStr, color)
+    userWebhook(verifiedUser.name, move)
     return 'Inserted Move'
 }
 
@@ -179,6 +176,7 @@ async function tallyMoves(){ //tally and execute
 
 async function executeMove(){
     move = pendingMove[0].split(',')
+    await userWebhook(null, move)
     const moveResult = chess.move({from: move[0], to: move[1], promotion: 'q'})
     await db.collection('moves').insertOne({fen: chess.fen(), move: moveResult, date: pendingMove[1]})
 
@@ -186,23 +184,45 @@ async function executeMove(){
     return `Executed Move: ${move}`
 }
 
-function userWebhook(name, move, date, dateStr, color){
-    const data = {
-        "username": name,
+async function userWebhook(name, move){
+    const date = new Date()
+    const dateStr = `${date.getMonth()}-${date.getDate()}-${date.getFullYear()}`
+    const turn = chess.turn()
+
+    color1 = turn === 'w' ? 0xfe5002 : 0xc72027
+    color2 = null
+    if (name === null){
+        from = move[0]
+        to = move[1]
+        if (turn === 'w'){
+            name = 'Los Gatos'
+            color1 = 0xfe5002
+            color2 = 0xffffff
+        }
+        else {
+            name = 'Saratoga'
+            color1 = 0xc72027
+            color2 = 0x000000
+        }
+    }
+    else {from = move.from; to = move.to}
+
+    data = {
+        username: name,
         embeds: [{
-            title: `${name}'s Move`,
-            url: `http://localhost:4200/boardView?name=${name}&date=${dateStr}&from=${move.from}&to=${move.to}&fen=${chess.fen()}`.split(" ").join("$"),
-            color: color,
+            title: `Click To See ${name}'s Move`,
+            url: `http://localhost:4200/boardView?name=${name}&date=${dateStr}&from=${from}&to=${to}&fen=${chess.fen()}`.split(" ").join("$"),
+            color: color2 === null ? color1 : color2,
             fields: [
                 {
-                    "name": "From",
-                    "value": move.from,
-                    "inline": true
+                    name: "From:",
+                    value: from,
+                    inline: true
                 },
                 {
-                    "name": "To",
-                    "value": move.to,
-                    "inline": true
+                    name: "To:",
+                    value: to,
+                    inline: true
                 }
             ],
             "timestamp": date
@@ -217,6 +237,18 @@ function userWebhook(name, move, date, dateStr, color){
         .catch(error => {
         console.error(error)
         })
+
+    if (color2 === null){return 'Sent User Webhook'}
+    data.embeds[0].color = color1
+    axios
+        .post(moveWebhookUrl, data)
+        .then(res => {
+        console.log(`statusCode: ${res.status}`)
+        })
+        .catch(error => {
+        console.error(error)
+        })
+
 }
 
 app.get('/', (req, res) => {

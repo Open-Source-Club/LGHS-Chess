@@ -64,7 +64,7 @@ if (userName != null){
     })
 
     const newH1 = document.createElement("h1");
-    newH1.innerHTML = `${userName}'s' Move`
+    newH1.innerHTML = `${userName}'s Move`
     newH1.id = "userBoardName";
     newH1.className= "boardText";
 
