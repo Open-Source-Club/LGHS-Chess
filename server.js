@@ -1,46 +1,49 @@
-const express = require('express');
-const mongo = require('mongodb').MongoClient;
-const { OAuth2Client } = require('google-auth-library');
+const express = require('express')
+const { MongoClient } = require('mongodb');
+const { OAuth2Client } = require('google-auth-library')
 const { Chess } = require('chess.js')
-const favicon = require('serve-favicon');
+const favicon = require('serve-favicon')
 const axios = require('axios')
+try{var config = require('./myConfig.json')}
+catch(error){var config = require('./config.json')}
 
-const OAuthId = "801666125404-bdn8r27m3d7ngriifuodeq7ajnc17kjl.apps.googleusercontent.com"
-const userWebhookUrl = 'https://discord.com/api/webhooks/898002048660963349/UFLsplp92OjrGnyYB6XykDkG3AeO3wP9qreJFR4CXwpVBCZAqfUVoNuehbVrD2zhDIPo'
-const moveWebhookUrl = 'https://discord.com/api/webhooks/898002513394040832/n8jthPgUiZiW6ou9mDUoOIC-pikV-H55A5aTSuU93kvV210jj0ZbfoR7T2w6e7_HlyKz'
+const app = express()
+const port = 8080
 
-const port = 8080;
-var mongoClient = null;
-const app = express();
-
-// If we are running in a Docker container, adjust the hostname
-const dbHost = process.env.DATABASE_HOST || 'localhost';
-var url = 'mongodb://' + dbHost + ':27017';
-
-var db = null;
 app.use(express.json())
-app.use(favicon(__dirname + '/favicon.ico'));
+app.use(favicon(__dirname + '/favicon.ico'))
 
-const oAuthClient = new OAuth2Client(OAuthId);
+const oAuthClient = new OAuth2Client(config.OAuthId)
 
-app.use(express.static('boardScripts'));
-app.use(express.static('boardDependencies/js'));
-app.use(express.static('boardDependencies/css'));
-app.use(express.static('boardDependencies/img/chesspieces/wikipedia'));
+app.use(express.static('boardScripts'))
+app.use(express.static('boardDependencies/js'))
+app.use(express.static('boardDependencies/css'))
+app.use(express.static('boardDependencies/img/chesspieces/wikipedia'))
 
 let chess = null
 let pendingMove = []
-//{fen: "r1bqkbnr/pp1ppppp/2n5/2p5/2P5/2NP4/PP2PPPP/R1BQKBNR b KQkq - 2 3", date: "9-21-2021"}
+
+const schoolWColors = [Number(config.schoolW.color1), Number(config.schoolW.color2)]
+const schoolBColors = [Number(config.schoolB.color1), Number(config.schoolB.color2)]
+
+let movesDB
+let whiteUsersDB
+let blackUsersDB
+async function mongoConnect(){
+    const url = `mongodb+srv://${config.mongoDbUsername}:${config.mongoDbPassword}@lghschess.sm1c8.mongodb.net/lghsChess?retryWrites=true&w=majority`
+    const client = await MongoClient.connect(url, { useNewUrlParser: true, useUnifiedTopology: true })
+    
+    const db = client.db("lghsChess")
+    movesDB = db.collection('moves')
+    whiteUsersDB = db.collection(`${config.schoolW.nameAbrv.toLowerCase()}Users`)
+    blackUsersDB = db.collection(`${config.schoolB.nameAbrv.toLowerCase()}Users`)
+}
+
 async function loadBoard(){
-    mongoClient = await mongo.connect(url, {useUnifiedTopology: true, useNewUrlParser: true})
-    db = mongoClient.db('lghsChess')
-
-    const collection = db.collection('moves');
-    const movesResult = await collection.find().toArray();
-
+    const movesResult = await movesDB.find().toArray()
     if (movesResult.length === 0){chess = new Chess(); console.log('Loaded New Board'); return}
 
-    chess = new Chess(movesResult.at(-1).fen);
+    chess = new Chess(movesResult.at(-1).fen)
     console.log('Loaded Board: ' + chess.fen())
 }
 
@@ -55,15 +58,15 @@ function verifyMove(move){
 
 async function checkAndInsert(verifiedUser, move){
     if (verifiedUser === undefined){return 'Invalid OAuth Sign In'}
-    else if (!(verifiedUser.domain === 'lgsstudent.org' || verifiedUser.domain === undefined)){return 'Not School Email';}
+    else if (!(verifiedUser.domain === config.schoolW.domain || verifiedUser.domain === config.schoolB.domain)){return 'Not School Email'}
 
-    let collection = null
+    let collection
     if (chess.turn() === 'w'){
-        if (verifiedUser.domain === 'lgsstudent.org'){collection = db.collection('lghsUsers');}
+        if (verifiedUser.domain === config.schoolW.domain){collection = whiteUsersDB}
         else {return `Not ${verifiedUser.domain} Account`}
     }
     else{
-        if (verifiedUser.domain === undefined){collection = db.collection('shsUsers');}
+        if (verifiedUser.domain === config.schoolB.domain){collection = blackUsersDB}
         else {return `Not ${verifiedUser.domain} Account`}
     }
 
@@ -120,11 +123,11 @@ async function checkAndInsert(verifiedUser, move){
 async function verifyOAuth(idToken) {
     const ticket = await oAuthClient.verifyIdToken({
         idToken: idToken,
-        audience: OAuthId,
+        audience: config.OAuthId,
     });
     const payload = ticket.getPayload();
-
-    return {email: payload['email'], domain: payload['hd'], name: payload['name'], userId: payload['sub']}
+    
+    return {email: payload['email'], domain: payload['email'].split('@')[1], name: payload['name'], userId: payload['sub']}
 }
 
 function verifyRequest(form){
@@ -140,9 +143,9 @@ async function tallyMoves(){ //tally and execute
     const date = new Date()
     const dateStr = `${date.getMonth()}-${date.getDate()}-${date.getFullYear()}`
 
-    let collection = null;
-    if (chess.turn() === 'w'){collection = db.collection('lghsUsers');}
-    else {collection = db.collection('shsUsers');}
+    let collection
+    if (chess.turn() === 'w'){collection = whiteUsersDB}
+    else {collection = blackUsersDB}
     const votedUsers = await collection.find({
         moves: {
             $elemMatch: {
@@ -178,7 +181,7 @@ async function executeMove(){
     move = pendingMove[0].split(',')
     await userWebhook(null, move)
     const moveResult = chess.move({from: move[0], to: move[1], promotion: 'q'})
-    await db.collection('moves').insertOne({fen: chess.fen(), move: moveResult, date: pendingMove[1]})
+    await movesDB.insertOne({fen: chess.fen(), move: moveResult, date: pendingMove[1]})
 
     pendingMove = []
     return `Executed Move: ${move}`
@@ -189,20 +192,18 @@ async function userWebhook(name, move){
     const dateStr = `${date.getMonth()}-${date.getDate()}-${date.getFullYear()}`
     const turn = chess.turn()
 
-    color1 = turn === 'w' ? 0xfe5002 : 0xc72027
+    color1 = turn === 'w' ? schoolWColors[0] : schoolBColors[0]
     color2 = null
     if (name === null){
         from = move[0]
         to = move[1]
         if (turn === 'w'){
-            name = 'Los Gatos'
-            color1 = 0xfe5002
-            color2 = 0xffffff
+            name = config.schoolW.name
+            color2 = schoolWColors[1]
         }
         else {
-            name = 'Saratoga'
-            color1 = 0xc72027
-            color2 = 0x000000
+            name = config.schoolB.name
+            color2 = schoolBColors[1]
         }
     }
     else {from = move.from; to = move.to}
@@ -211,7 +212,7 @@ async function userWebhook(name, move){
         username: name,
         embeds: [{
             title: `Click To See ${name}'s Move`,
-            url: `http://localhost:4200/boardView?name=${name}&date=${dateStr}&from=${from}&to=${to}&fen=${chess.fen()}`.split(" ").join("$"),
+            url: `${config.domain}/boardView?name=${name}&date=${dateStr}&from=${from}&to=${to}&fen=${chess.fen()}`.split(" ").join("$"),
             color: color2 === null ? color1 : color2,
             fields: [
                 {
@@ -230,7 +231,7 @@ async function userWebhook(name, move){
     }
 
     axios
-        .post(userWebhookUrl, data)
+        .post(config.userWebhookUrl, data)
         .then(res => {
         console.log(`statusCode: ${res.status}`)
         })
@@ -241,7 +242,7 @@ async function userWebhook(name, move){
     if (color2 === null){return 'Sent User Webhook'}
     data.embeds[0].color = color1
     axios
-        .post(moveWebhookUrl, data)
+        .post(config.moveWebhookUrl, data)
         .then(res => {
         console.log(`statusCode: ${res.status}`)
         })
@@ -255,8 +256,8 @@ app.get('/', (req, res) => {
     res.sendFile(__dirname + '/board.html');
 });
 
-app.get('/boardPosition', (req, res) => {
-    res.send(chess.fen())
+app.get('/fetchData', (req, res) => {
+    res.json({fen: chess.fen(), OAuthId: config.OAuthId, schoolW: config.schoolW, schoolB: config.schoolB})
 });
 
 app.get('/boardView', (req, res) => {
@@ -288,8 +289,12 @@ app.post('/testPost', async (req, res) => {
     res.send(response);
 })
 
-loadBoard()
-app.listen(port, () => console.log(`This app is listening on port ${port}`));
+;(async () => {
+   await mongoConnect()
+   await loadBoard()
+   app.listen(port, () => console.log(`This app is listening on port ${port}`));
+})();
+
 
 //scheduling for even days
 //cron.schedule('0 30 11 * * *', () => {await tallyMoves(); await executeMove(); console.log("Executed Move At " + new Date())}); //Tally and execute white move at 11:30

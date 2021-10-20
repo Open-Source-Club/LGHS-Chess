@@ -1,8 +1,10 @@
-let board = null
+let board
+let idToken
+let domain
+let chess
+let schoolW
+let schoolB
 let move = null
-let idToken = null;
-let domain = null;
-let chess = null;
 let moveConfirmed = false
 
 function onDragStart(source, piece, position, orientation) {
@@ -33,7 +35,7 @@ function onSnapEnd() {
 
 function updateStatus() {
     let status = ''
-    school = chess.turn() === 'w' ? 'LGHS': 'SHS'
+    school = chess.turn() === 'w' ? schoolW.nameAbrv: schoolB.nameAbrv
 
     if (chess.in_checkmate()) {status = `Game Over, ${school} Is In Checkmate.`}
     else if (chess.in_draw()) {status = 'Game Over, Draw'}
@@ -45,16 +47,19 @@ function updateStatus() {
     $('#status').html(status)
 }
 
-const loadBoard = () => {
+const loadBoard_OAuthId = () => {
     let xhr = new XMLHttpRequest();
-    xhr.open("GET", "/boardPosition", true);
-    xhr.setRequestHeader('Content-Type', 'application/json');
+    xhr.open('GET', '/fetchData', true);
     xhr.send();
-
+    
     xhr.onload = () => {
-        chess = new Chess(xhr.response)
+        response = JSON.parse(xhr.response)
+        $('meta[name="google-signin-client_id"]').attr('content', response.OAuthId);
+        schoolW = response.schoolW
+        schoolB = response.schoolB
+        
+        chess = new Chess(response.fen)
         turn = chess.turn() === 'w' ? 'white' : 'black'
-
         board = Chessboard('board', {
             draggable: true,
             position: chess.fen(),
@@ -68,26 +73,20 @@ const loadBoard = () => {
     };
 }
 
-const confirmMove = () => {
-    console.log(move)
-    moveConfirmed = true;
-}
-
 const undoMove = () => {
     if (moveConfirmed === false)
         chess.undo()
         move = null
     board.position(chess.fen())
 }
-
 const postData = () => {
     if (moveConfirmed === true){return 'Already Moved Today'}
     if (move === null){return 'No Move'}
-    if (domain === null){return "Not Signed In"}
-    else if (!(domain === 'lgsstudent.org' || domain === 'gmail.com')){return 'Not Student Email'}
+    if (domain === undefined){return "Not Signed In"}
+    else if (!(domain === schoolW.domain || domain === schoolB.domain)){return 'Not Student Email'}
 
-    if (chess.turn() === 'b' && domain != 'lgsstudent.org'){return "Not SHS Account"} // swapped w and b because this could only run after the user has moved thus changing the move to the opposite color
-    else if (chess.turn() === 'w' && domain != 'gmail.com'){return "Not LGHS Account"}
+    if (chess.turn() === 'b' && domain != schoolW.domain){return `Not ${schoolW.nameAbrv} Account`} // swapped w and b because this could only run after the user has moved thus changing the move to the opposite color
+    else if (chess.turn() === 'w' && domain != schoolB.domain){return `Not ${schoolB.nameAbrv} Account`}
 
     let xhr = new XMLHttpRequest();
     xhr.open("POST", "/", true);
@@ -127,10 +126,8 @@ function onSignIn(googleUser) {
     console.log(domain)
 }
 
-loadBoard()
-$('#confirmMove').on('click', confirmMove)
+loadBoard_OAuthId()
 $('#undo').on('click', undoMove)
-//$('#sendData').on('click', postData)
 document.getElementById("sendData").onclick = function (){
     result = postData()
     if (result != 'Sent Form Data'){

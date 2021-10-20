@@ -1,3 +1,2 @@
 import requests
-
-requests.post("http://localhost:4200/testPost")
+requests.post("http://localhost:8080/testPost")

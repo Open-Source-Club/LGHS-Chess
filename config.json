@@ -1,0 +1,25 @@
+{
+    "OAuthId": "",
+    "domain": "",
+    
+    "userWebhookUrl": "",
+    "moveWebhookUrl": "",
+    
+    "mongoDbUsername": "",
+    "mongoDbPassword": "",
+    
+    "schoolW": {
+        "name": "",
+        "nameAbrv": "",
+        "domain": "",
+        "color1": "",
+        "color2": ""
+    },
+    "schoolB": {
+        "name": "",
+        "nameAbrv": "",
+        "domain": "",
+        "color1": "",
+        "color2": ""
+    }    
+}

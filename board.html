@@ -7,7 +7,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
-    <meta name="google-signin-client_id" content="801666125404-bdn8r27m3d7ngriifuodeq7ajnc17kjl.apps.googleusercontent.com">
+    <meta name="google-signin-client_id">
     <link rel="stylesheet" href="chessboard-1.0.0.min.css">
 
     <script src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
@@ -17,12 +17,10 @@
 <body>
     <div id="board" style="width: 400px"></div>
 
-    <button id="confirmMove">confirmMove</button><br>
-    <button id="undo">undo</button><br>
-
     <script src="https://apis.google.com/js/platform.js"></script>
     <div class="g-signin2" data-onsuccess="onSignIn"></div>
 
+    <button id="undo">undo</button><br>
     <button id="sendData">sendData</button><div id = "response"></div>
 
     <label>Status:</label>
