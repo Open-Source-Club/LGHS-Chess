@@ -47,17 +47,22 @@ function updateStatus() {
     $('#status').html(status)
 }
 
-const loadBoard_OAuthId = () => {
+const loadData = () => {
     let xhr = new XMLHttpRequest();
     xhr.open('GET', '/fetchData', true);
     xhr.send();
     
     xhr.onload = () => {
         response = JSON.parse(xhr.response)
-        $('meta[name="google-signin-client_id"]').attr('content', response.OAuthId);
         schoolW = response.schoolW
         schoolB = response.schoolB
-        
+
+        $('meta[name="google-signin-client_id"]').attr('content', response.OAuthId);
+        const newScript = document.createElement("script");
+        newScript.src = "https://apis.google.com/js/platform.js"
+        const currentDiv = document.getElementById("OAuthButton");
+        document.body.insertBefore(newScript, currentDiv);
+       
         chess = new Chess(response.fen)
         turn = chess.turn() === 'w' ? 'white' : 'black'
         board = Chessboard('board', {
@@ -126,7 +131,7 @@ function onSignIn(googleUser) {
     console.log(domain)
 }
 
-loadBoard_OAuthId()
+loadData()
 $('#undo').on('click', undoMove)
 document.getElementById("sendData").onclick = function (){
     result = postData()

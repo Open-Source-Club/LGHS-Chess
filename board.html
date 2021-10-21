@@ -15,19 +15,20 @@
 </head>
 
 <body>
-    <div id="board" style="width: 400px"></div>
+   <div id="board" style="width: 400px"></div>
 
-    <script src="https://apis.google.com/js/platform.js"></script>
-    <div class="g-signin2" data-onsuccess="onSignIn"></div>
+   <button id="undo">undo</button><br>
+   <button id="sendData">sendData</button><div id = "response"></div>
 
-    <button id="undo">undo</button><br>
-    <button id="sendData">sendData</button><div id = "response"></div>
+   <script src="chess.js"></script>
+   <script src="main.js"></script>
+
+    <div id = "OAuthButton" class="g-signin2" data-onsuccess="onSignIn"></div>
 
     <label>Status:</label>
     <div id="status"></div>
 
-    <script src="chess.js"></script>
-    <script src="main.js"></script>
+
 </body>
 
 </html>
