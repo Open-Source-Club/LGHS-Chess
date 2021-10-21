@@ -32,12 +32,6 @@ console.log(from)
 console.log(to)
 console.log(fen)
 
-let xhr = new XMLHttpRequest();
-xhr.open("GET", "/boardPosition", true);
-xhr.setRequestHeader('Content-Type', 'application/json');
-xhr.send();
-
-
 chess = new Chess(fen)
 turn = chess.turn() === 'w' ? 'white' : 'black'
 
