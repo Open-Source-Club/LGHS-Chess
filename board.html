@@ -30,32 +30,27 @@
         background-color: black;
       }
 
-      label{
+      #status{
+        margin: 4px 2px;
+        font-size: 16px;
         color: white;
+        font-family: Arial;
       }
     </style>
-
-    
     
 </head>
 
 <body>
-   <div id="board" style="width: 400px"></div>
+   <div id="board" style="width: 500px"></div>
 
-   <button id="undo">undo</button><br>
-   <button id="sendData">sendData</button><div id = "response"></div>
+   <button id="undo">Undo</button><br>
+   <button id="sendData">Send Data</button><div id = "response"></div>
 
    <script src="chess.js"></script>
    <script src="main.js"></script>
 
     <div id = "OAuthButton" class="g-signin2" data-onsuccess="onSignIn"></div>
 
-    <label>Status:</label>
-    <div id="status"></div>
-    
-    
-    
-
+    <div id="status">Status</div>
 </body>
-
 </html>
