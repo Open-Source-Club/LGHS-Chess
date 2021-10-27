@@ -72,7 +72,7 @@ async function checkAndInsert(verifiedUser, move){
 
     if (verifyMove(move) != 'Valid'){return 'Invalid move'}
     
-    const date = new Date()
+    const date = new Date(new Date().toLocaleString('en-US', {timeZone : 'America/Los_Angeles'}))
     const dateStr = `${date.getMonth()}-${date.getDate()}-${date.getFullYear()}`
     const hours = date.getHours()
 
@@ -140,7 +140,7 @@ function verifyRequest(form){
 }
 
 async function tallyMoves(){ //tally and execute
-    const date = new Date()
+    const date = new Date(new Date().toLocaleString('en-US', {timeZone : 'America/Los_Angeles'}))
     const dateStr = `${date.getMonth()}-${date.getDate()}-${date.getFullYear()}`
 
     let collection
@@ -188,7 +188,7 @@ async function executeMove(){
 }
 
 async function userWebhook(name, move){
-    const date = new Date()
+    const date = new Date(new Date().toLocaleString('en-US', {timeZone : 'America/Los_Angeles'}))
     const dateStr = `${date.getMonth()}-${date.getDate()}-${date.getFullYear()}`
     const turn = chess.turn()
 
