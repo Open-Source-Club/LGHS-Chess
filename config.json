@@ -4,9 +4,7 @@
     
     "userWebhookUrl": "",
     "moveWebhookUrl": "",
-    
-    "mongoDbUsername": "",
-    "mongoDbPassword": "",
+    "mongoUrl": "",
     
     "schoolW": {
         "name": "",

@@ -30,8 +30,7 @@ let movesDB
 let whiteUsersDB
 let blackUsersDB
 async function mongoConnect(){
-    const url = `mongodb+srv://${config.mongoDbUsername}:${config.mongoDbPassword}@lghschess.sm1c8.mongodb.net/lghsChess?retryWrites=true&w=majority`
-    const client = await MongoClient.connect(url, { useNewUrlParser: true, useUnifiedTopology: true })
+    const client = await MongoClient.connect(config.mongoUrl, { useNewUrlParser: true, useUnifiedTopology: true })
     
     const db = client.db("lghsChess")
     movesDB = db.collection('moves')
