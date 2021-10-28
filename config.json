@@ -1,25 +1,27 @@
 {
     "production": false,
-    
+
     "OAuthId": "",
     "domain": "",
-    
+
     "userWebhookUrl": "",
     "moveWebhookUrl": "",
     "mongoUrl": "",
-    
+
     "schoolW": {
-        "name": "",
-        "nameAbrv": "",
-        "domain": "",
-        "color1": "",
-        "color2": ""
+        "name": "Los Gatos",
+        "nameAbrv": "LGHS",
+        "domain": "lgsstudent.org",
+        "color1": "0xfe5002",
+        "color2": "0xffffff"
     },
     "schoolB": {
-        "name": "",
-        "nameAbrv": "",
-        "domain": "",
-        "color1": "",
-        "color2": ""
-    }    
+        "name": "Saratoga",
+        "nameAbrv": "SHS",
+        "domain": "gmail.com",
+        "color1": "0xc72027",
+        "color2": "0x000000"
+    }
+
+
 }
