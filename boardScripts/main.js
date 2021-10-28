@@ -74,25 +74,26 @@ const loadData = () => {
             onSnapEnd: onSnapEnd
         })
 
-        countdown();
-
-        updateStatus()
+        countdown(chess.turn());
+        updateStatus();
     };
 }
+
+
 
 
 //scheduling for even days
 //cron.schedule('0 30 11 * * *', () => {await tallyMoves(); await executeMove(); console.log("Executed Move At " + new Date())}); //Tally and execute white move at 11:30
 //cron.schedule('0 35 14 * * *', () => {await tallyMoves(); console.log("Executed Move At " + new Date())}); //voting from 11:30 - 2:45 //Tally black move at 2:45
 //cron.schedule('0 35 8 * * *', () => {await executeMove(); console.log("Executed Move At " + new Date())}); //voting from 11:30 - 2:45 //Execute black move at 8:30 the next day
-function countdown() {
+async function countdown(turn) {
 
   let now = new Date();
 
-  if (chess.turn() === 'w')
+  if (turn === 'w')
   {
     //the countdown date for white moves is just todays date but at 11:30
-    let countDownDate = new Date(now.getFullYear(), now.getMonth(), date.getDate(), 11, 30, 0)
+    let countDownDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 11, 30, 0)
     var distance = countDownDate - now;
   }
   else {
@@ -116,7 +117,7 @@ function countdown() {
   seconds = seconds.length < 2 ?  '0'+seconds : seconds;
 
   $('#countdown').text(hours + ":" + minutes + ":" + seconds);
-  let t = setTimeout(function(){ countdown() }, 1000);
+  let t = setTimeout(function(){ countdown(turn) }, 1000);
 }
 
 const undoMove = () => {
