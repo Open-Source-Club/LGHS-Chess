@@ -6,6 +6,7 @@ const app = express();
 app.listen(2400, () => {console.log("Server started at port 2400")});
 
 let production = true
+/*
 const timeZone = new Date(new Date().toLocaleString('en-US', {timeZone : 'America/New_York'}))
 
 const a = () =>{
@@ -20,3 +21,29 @@ if (production === true){
 }
 
 console.log(timeZone.getHours())
+*/
+/*
+async function cronTest(){
+    if(production === false){return 'Not Production'}
+    console.log('started')
+    cron.schedule('* * * * * *', () => {console.log("testing")})
+}
+
+cronTest()
+*/
+/*
+async function timeOutTest(){
+    setTimeout(function() {
+        console.log('Hello World!');
+      }, 2000);
+      return 'done'
+}
+async function mainTest(){
+    console.log(await timeOutTest())
+}
+
+mainTest()
+*/
+
+cron.schedule('* * * * * *', async () => {console.log("testing")})
+console.log('works')

@@ -1,4 +1,6 @@
 {
+    "production": false,
+    
     "OAuthId": "",
     "domain": "",
     
