@@ -119,8 +119,6 @@ function countdown() {
   let t = setTimeout(function(){ countdown() }, 1000);
 }
 
-countdown();
-
 const undoMove = () => {
     if (moveConfirmed === false)
         chess.undo()
