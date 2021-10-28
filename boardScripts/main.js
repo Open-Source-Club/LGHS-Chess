@@ -93,7 +93,7 @@ async function countdown(turn) {
   if (turn === 'w')
   {
     //the countdown date for white moves is just todays date but at 11:30
-    let countDownDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 11, 30, 0)
+    let countDownDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 11, 30, 0);
     var distance = countDownDate - now;
   }
   else {
@@ -116,8 +116,15 @@ async function countdown(turn) {
   minutes = minutes.length < 2 ?  '0'+minutes : minutes;
   seconds = seconds.length < 2 ?  '0'+seconds : seconds;
 
-  $('#countdown').text(hours + ":" + minutes + ":" + seconds);
-  let t = setTimeout(function(){ countdown(turn) }, 1000);
+  if (distance > 0) {
+    $('#countdown').text(hours + ":" + minutes + ":" + seconds);
+    var t = setTimeout(function(){ countdown(turn) }, 1000);
+  }
+  else {
+    clearTimeout(t);
+    console.log("time up!");
+    location.reload();
+  }
 }
 
 const undoMove = () => {
