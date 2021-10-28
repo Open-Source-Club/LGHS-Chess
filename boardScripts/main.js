@@ -99,8 +99,8 @@ function countdown() {
     //couldn't find a better way to do this, but it first sets the day to tomorrow and then sets the time.
     let countDownDate = new Date((new Date()).valueOf() + 86400000);
     countDownDate.setHours(8);
-    countDownDate.setMinutes(8);
-    countDownDate.setSeconds(8);
+    countDownDate.setMinutes(30);
+    countDownDate.setSeconds(0);
 
     var distance = countDownDate - now;
   }
