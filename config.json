@@ -13,13 +13,16 @@
         "nameAbrv": "",
         "domain": "",
         "color1": "",
-        "color2": ""
+        "color2": "",
+        "moveTime": []
     },
     "schoolB": {
         "name": "",
         "nameAbrv": "",
         "domain": "",
         "color1": "",
-        "color2": ""
+        "color2": "",
+        "tallyTime": [],
+        "executeTime": []
     }    
 }

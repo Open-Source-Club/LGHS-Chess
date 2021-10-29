@@ -258,9 +258,9 @@ async function userWebhook(name, move){
 async function scheculeCron(){
     if (config.production != true){console.log('Not Production'); return}
 
-    cron.schedule('0 30 11 * * *', async () => {await tallyMoves(); await executeMove()}) //11:30
-    cron.schedule('0 35 14 * * *', async () => {await tallyMoves()}) // 2:35
-    cron.schedule('0 30 8 * * *', async () => {await executeMove()}) //8:30
+    cron.schedule(`0 ${config.schoolW.moveTime[1]} ${config.schoolW.moveTime[0]} * * *`, async () => {await tallyMoves(); await executeMove()}, {timezone: 'America/Los_Angeles'}) //11:30
+    cron.schedule(`0 ${config.schoolB.tallyTime[1]} ${config.schoolB.tallyTime[0]} * * *`, async () => {await tallyMoves()}, {timezone: 'America/Los_Angeles'}) // 2:35
+    cron.schedule(`0 ${config.schoolB.executeTime[1]} ${config.schoolB.executeTime[0]} * * *`, async () => {await executeMove()}, {timezone: 'America/Los_Angeles'}) //8:30
     console.log('Scheduled Cron')
 }
 
