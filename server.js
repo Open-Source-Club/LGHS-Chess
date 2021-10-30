@@ -1,6 +1,6 @@
 const express = require('express')
 const axios = require('axios')
-const cron = require('node-cron')
+const CronJob = require('cron').CronJob;
 const favicon = require('serve-favicon')
 const { Chess } = require('chess.js')
 const { MongoClient } = require('mongodb')
@@ -154,7 +154,7 @@ async function tallyMoves(){ //tally and execute
             }
         }
     }).toArray()
-    
+
     let moveVotes = {}
     for (user in votedUsers){
         let moveStr = `${votedUsers[user].moves.at(-1).move.from},${votedUsers[user].moves.at(-1).move.to}`
@@ -257,10 +257,21 @@ async function userWebhook(name, move){
 
 async function scheculeCron(){
     if (config.production != true){console.log('Not Production'); return}
+    const whiteMove = new CronJob(`0 ${config.schoolW.moveTime[1]} ${config.schoolW.moveTime[0]} * * *`, async function() {
+        await tallyMoves(); await executeMove()}, 
+        null, true, 'America/Los_Angeles')
 
-    cron.schedule(`0 ${config.schoolW.moveTime[1]} ${config.schoolW.moveTime[0]} * * *`, async () => {await tallyMoves(); await executeMove()}, {timezone: 'America/Los_Angeles'}) //11:30
-    cron.schedule(`0 ${config.schoolB.tallyTime[1]} ${config.schoolB.tallyTime[0]} * * *`, async () => {await tallyMoves()}, {timezone: 'America/Los_Angeles'}) // 2:35
-    cron.schedule(`0 ${config.schoolB.executeTime[1]} ${config.schoolB.executeTime[0]} * * *`, async () => {await executeMove()}, {timezone: 'America/Los_Angeles'}) //8:30
+    const blackTally = new CronJob(`0 ${config.schoolB.tallyTime[1]} ${config.schoolB.tallyTime[0]} * * *`, async function() {
+        await tallyMoves()},
+        null, true, 'America/Los_Angeles')
+
+    const blackExecute = new CronJob(`0 ${config.schoolB.executeTime[1]} ${config.schoolB.executeTime[0]} * * *`, async function() {
+        await executeMove()},
+        null, true, 'America/Los_Angeles')
+
+    whiteMove.start()
+    blackTally.start()
+    blackExecute.start()
     console.log('Scheduled Cron')
 }
 
