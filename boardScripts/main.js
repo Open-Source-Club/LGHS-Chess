@@ -40,7 +40,7 @@ function updateStatus() {
     if (chess.in_checkmate()) {status = `Game Over, ${school} Is In Checkmate.`}
     else if (chess.in_draw()) {status = 'Game Over, Draw'}
     else {
-        status = school + " 's Move"
+        status = school + "'s Move"
         if (chess.in_check()) {status += ', ' + school + ' Is In Check'}
     }
 
@@ -79,9 +79,9 @@ const loadData = () => {
 }
 
 const undoMove = () => {
-    if (moveConfirmed === false)
-        chess.undo()
-        move = null
+    if (moveConfirmed === true){return 'Already Moved'}
+    chess.undo()
+    move = null
     board.position(chess.fen())
 }
 const postData = () => {
