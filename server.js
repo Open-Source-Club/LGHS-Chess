@@ -258,7 +258,7 @@ async function userWebhook(name, move){
 async function scheculeCron(){
     if (config.production != true){console.log('Not Production'); return}
 
-    cron.schedule('0 30 11 * * *', async () => {await tallyMoves(); await executeMove()}) //11:30
+    cron.schedule('0 30 11 * * *', async () => {await tallyMoves(); await executeMove(); await countdown("end");}) //11:30
     cron.schedule('0 35 14 * * *', async () => {await tallyMoves()}) // 2:35
     cron.schedule('0 30 8 * * *', async () => {await executeMove()}) //8:30
     console.log('Scheduled Cron')

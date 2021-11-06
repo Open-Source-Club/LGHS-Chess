@@ -88,6 +88,13 @@ const loadData = () => {
 //cron.schedule('0 35 8 * * *', () => {await executeMove(); console.log("Executed Move At " + new Date())}); //voting from 11:30 - 2:45 //Execute black move at 8:30 the next day
 async function countdown(turn) {
 
+  if (turn === 'end') {
+    clearTimeout(t);
+    console.log("time up!");
+    location.reload();
+    return;
+  }
+
   let now = new Date();
 
   if (turn === 'w')
@@ -99,8 +106,8 @@ async function countdown(turn) {
   else {
     //couldn't find a better way to do this, but it first sets the day to tomorrow and then sets the time.
     let countDownDate = new Date((new Date()).valueOf() + 86400000);
-    countDownDate.setHours(8);
-    countDownDate.setMinutes(30);
+    countDownDate.setHours(14);
+    countDownDate.setMinutes(45);
     countDownDate.setSeconds(0);
 
     var distance = countDownDate - now;
@@ -119,11 +126,6 @@ async function countdown(turn) {
   if (distance > 0) {
     $('#countdown').text(hours + ":" + minutes + ":" + seconds);
     var t = setTimeout(function(){ countdown(turn) }, 1000);
-  }
-  else {
-    clearTimeout(t);
-    console.log("time up!");
-    location.reload();
   }
 }
 
