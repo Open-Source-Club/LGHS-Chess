@@ -1,6 +1,6 @@
 const express = require('express')
 const axios = require('axios')
-const CronJob = require('cron').CronJob;
+const cron = require('node-cron')
 const favicon = require('serve-favicon')
 const { Chess } = require('chess.js')
 const { MongoClient } = require('mongodb')
@@ -33,7 +33,7 @@ let whiteUsersDB
 let blackUsersDB
 async function mongoConnect(){
     const client = await MongoClient.connect(config.mongoUrl, { useNewUrlParser: true, useUnifiedTopology: true })
-    
+
     const db = client.db('lghsChess')
     movesDB = db.collection('moves')
     whiteUsersDB = db.collection(`${config.schoolW.nameAbrv.toLowerCase()}Users`)
@@ -53,7 +53,7 @@ function verifyMove(move){
     for (v in validMoves){
         if (validMoves[v].to === move.to){return 'Valid'}
     }
-    
+
     return 'Invalid'
 }
 
@@ -72,7 +72,7 @@ async function checkAndInsert(verifiedUser, move){
     }
 
     if (verifyMove(move) != 'Valid'){return 'Invalid move'}
-    
+
     const date = new Date(new Date().toLocaleString('en-US', {timeZone : 'America/Los_Angeles'}))
     const dateStr = `${date.getMonth()}-${date.getDate()}-${date.getFullYear()}`
     const hours = date.getHours()
@@ -92,7 +92,7 @@ async function checkAndInsert(verifiedUser, move){
                 move: {
                     from: move.from,
                     to: move.to
-                } 
+                }
             }]
         })
         userWebhook(verifiedUser.name, move)
@@ -112,9 +112,9 @@ async function checkAndInsert(verifiedUser, move){
                 move: {
                     from: move.from,
                     to: move.to
-                } 
+                }
             }
-        } 
+        }
     })
 
     userWebhook(verifiedUser.name, move)
@@ -125,9 +125,9 @@ async function verifyOAuth(idToken) {
     const ticket = await oAuthClient.verifyIdToken({
         idToken: idToken,
         audience: config.OAuthId,
-    })
-    const payload = ticket.getPayload()
-    
+    });
+    const payload = ticket.getPayload();
+
     return {email: payload['email'], domain: payload['email'].split('@')[1], name: payload['name'], userId: payload['sub']}
 }
 
@@ -136,8 +136,8 @@ function verifyRequest(form){
         if (typeof form.idToken === 'string' && typeof form.move.from === 'string' && typeof form.move.to === 'string'){return 'Valid Request'}
         else {return 'Invalid Request'}
     }
-    
-    catch (error) {return 'Invalid Request'}
+
+    catch (error) {return "Invalid Request"}
 }
 
 async function tallyMoves(){ //tally and execute
@@ -158,7 +158,7 @@ async function tallyMoves(){ //tally and execute
     let moveVotes = {}
     for (user in votedUsers){
         let moveStr = `${votedUsers[user].moves.at(-1).move.from},${votedUsers[user].moves.at(-1).move.to}`
-    
+
         if (moveVotes.hasOwnProperty(moveStr)){moveVotes[moveStr] ++}
         else {moveVotes[moveStr] = 1}
     }
@@ -257,21 +257,10 @@ async function userWebhook(name, move){
 
 async function scheculeCron(){
     if (config.production != true){console.log('Not Production'); return}
-    const whiteMove = new CronJob(`0 ${config.schoolW.moveTime[1]} ${config.schoolW.moveTime[0]} * * *`, async function() {
-        await tallyMoves(); await executeMove()}, 
-        null, true, 'America/Los_Angeles')
 
-    const blackTally = new CronJob(`0 ${config.schoolB.tallyTime[1]} ${config.schoolB.tallyTime[0]} * * *`, async function() {
-        await tallyMoves()},
-        null, true, 'America/Los_Angeles')
-
-    const blackExecute = new CronJob(`0 ${config.schoolB.executeTime[1]} ${config.schoolB.executeTime[0]} * * *`, async function() {
-        await executeMove()},
-        null, true, 'America/Los_Angeles')
-
-    whiteMove.start()
-    blackTally.start()
-    blackExecute.start()
+    cron.schedule('0 30 11 * * *', async () => {await tallyMoves(); await executeMove(); await countdown("end");}) //11:30
+    cron.schedule('0 35 14 * * *', async () => {await tallyMoves()}) // 2:35
+    cron.schedule('0 30 8 * * *', async () => {await executeMove()}) //8:30
     console.log('Scheduled Cron')
 }
 
@@ -305,7 +294,7 @@ app.post('/testPost', async (req, res) => {
 ;(async () => {
    await mongoConnect()
    await loadBoard()
-   
+
    app.listen(port, () => console.log(`This app is listening on port ${port}`))
    scheculeCron()
 })()

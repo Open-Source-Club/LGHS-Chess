@@ -1,11 +1,49 @@
-const CronJob = require('cron').CronJob;
-const job = new CronJob('0 52 12 * * *', function() {
-  console.log('Job1');
-}, null, true, 'America/Los_Angeles');
+const express = require('express');
+const cron = require('node-cron');
 
-const job2 = new CronJob('0 53 12 * * *', function() {
-    console.log('Job2');
-}, null, true, 'America/Los_Angeles');
+const app = express();
 
-job.start();
-job2.start()
+app.listen(2400, () => {console.log("Server started at port 2400")});
+
+let production = true
+/*
+const timeZone = new Date(new Date().toLocaleString('en-US', {timeZone : 'America/New_York'}))
+
+const a = () =>{
+    cron.schedule('0 48 9 * * *', () => {console.log(new Date(timeZone.getMinutes('en-US', {timeZone : 'America/Los_Angeles'})))}); //Tally and execute white move at 11:30
+    cron.schedule('0 30 11 * * *', () => {console.log(`This ran at ${new Date()}`)}); //Tally and execute white move at 11:30
+    cron.schedule('0 35 14 * * *', () => {console.log(`This ran at ${new Date()}`)});
+    cron.schedule('0 35 8 * * *', () => {console.log(`This ran at ${new Date()}`)});
+}
+
+if (production === true){
+    a()
+}
+
+console.log(timeZone.getHours())
+*/
+/*
+async function cronTest(){
+    if(production === false){return 'Not Production'}
+    console.log('started')
+    cron.schedule('* * * * * *', () => {console.log("testing")})
+}
+
+cronTest()
+*/
+/*
+async function timeOutTest(){
+    setTimeout(function() {
+        console.log('Hello World!');
+      }, 2000);
+      return 'done'
+}
+async function mainTest(){
+    console.log(await timeOutTest())
+}
+
+mainTest()
+*/
+
+cron.schedule('* * * * * *', async () => {console.log("testing")})
+console.log('works')

@@ -51,7 +51,7 @@ const loadData = () => {
     let xhr = new XMLHttpRequest();
     xhr.open('GET', '/fetchData', true);
     xhr.send();
-    
+
     xhr.onload = () => {
         response = JSON.parse(xhr.response)
         schoolW = response.schoolW
@@ -62,7 +62,7 @@ const loadData = () => {
         newScript.src = "https://apis.google.com/js/platform.js"
         const currentDiv = document.getElementById("OAuthButton");
         document.body.insertBefore(newScript, currentDiv);
-       
+
         chess = new Chess(response.fen)
         turn = chess.turn() === 'w' ? 'white' : 'black'
         board = Chessboard('board', {
@@ -74,8 +74,59 @@ const loadData = () => {
             onSnapEnd: onSnapEnd
         })
 
-        updateStatus()
+        countdown(chess.turn());
+        updateStatus();
     };
+}
+
+
+
+
+//scheduling for even days
+//cron.schedule('0 30 11 * * *', () => {await tallyMoves(); await executeMove(); console.log("Executed Move At " + new Date())}); //Tally and execute white move at 11:30
+//cron.schedule('0 35 14 * * *', () => {await tallyMoves(); console.log("Executed Move At " + new Date())}); //voting from 11:30 - 2:45 //Tally black move at 2:45
+//cron.schedule('0 35 8 * * *', () => {await executeMove(); console.log("Executed Move At " + new Date())}); //voting from 11:30 - 2:45 //Execute black move at 8:30 the next day
+async function countdown(turn) {
+
+  if (turn === 'end') {
+    clearTimeout(t);
+    console.log("time up!");
+    location.reload();
+    return;
+  }
+
+  let now = new Date();
+
+  if (turn === 'w')
+  {
+    //the countdown date for white moves is just todays date but at 11:30
+    let countDownDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 11, 30, 0);
+    var distance = countDownDate - now;
+  }
+  else {
+    //couldn't find a better way to do this, but it first sets the day to tomorrow and then sets the time.
+    let countDownDate = new Date((new Date()).valueOf() + 86400000);
+    countDownDate.setHours(14);
+    countDownDate.setMinutes(45);
+    countDownDate.setSeconds(0);
+
+    var distance = countDownDate - now;
+  }
+
+  var hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)).toString();
+  var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60)).toString();
+  var seconds = Math.floor((distance % (1000 * 60)) / 1000).toString();
+
+  //add a leading zero
+  //lazy
+  hours = hours.length < 2 ?  '0'+hours : hours;
+  minutes = minutes.length < 2 ?  '0'+minutes : minutes;
+  seconds = seconds.length < 2 ?  '0'+seconds : seconds;
+
+  if (distance > 0) {
+    $('#countdown').text(hours + ":" + minutes + ":" + seconds);
+    var t = setTimeout(function(){ countdown(turn) }, 1000);
+  }
 }
 
 const undoMove = () => {
@@ -96,7 +147,7 @@ const postData = () => {
     let xhr = new XMLHttpRequest();
     xhr.open("POST", "/", true);
     xhr.setRequestHeader('Content-Type', 'application/json');
-    
+
     xhr.send(JSON.stringify({
         idToken: idToken,
         move: {
