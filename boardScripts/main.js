@@ -74,8 +74,41 @@ const loadData = () => {
             onSnapEnd: onSnapEnd
         })
 
+        startCountDown()
         updateStatus()
     };
+}
+
+const startCountDown = () => {
+    let dateNow = new Date();
+    let countDownDate = new Date(dateNow.getFullYear(), dateNow.getMonth(), dateNow.getDate(), schoolW.moveTime[0], schoolW.moveTime[1], 0, 0).getTime()
+
+    if (countDownDate - dateNow.getTime() < 0){
+        countDownDate = new Date(dateNow.getFullYear(), dateNow.getMonth(), dateNow.getDate(), schoolB.moveTime[0], schoolB.moveTime[1], 0, 0).getTime()
+
+        if (countDownDate - dateNow.getTime() < 0){
+            countDownDate = new Date(dateNow.getFullYear(), dateNow.getMonth(), dateNow.getDate() + 1, schoolW.moveTime[0], schoolW.moveTime[1], 0, 0).getTime()
+        }
+    }
+
+    timer = document.getElementById("countdown")
+    const countDown = () => {
+        let now = new Date().getTime();
+        let distance = countDownDate - now;
+
+        let hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        let minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+        let seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+        timer.innerHTML = `${hours}:${minutes}:${seconds}`;
+
+        if (distance < 0) {
+            timer.innerHTML = 'EXPIRED';
+        }
+    }
+
+    setInterval(countDown, 1000);
+    countDown()
 }
 
 const undoMove = () => {

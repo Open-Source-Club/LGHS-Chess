@@ -22,7 +22,6 @@
         "domain": "",
         "color1": "",
         "color2": "",
-        "tallyTime": [],
-        "executeTime": []
+        "moveTime": []
     }    
 }
