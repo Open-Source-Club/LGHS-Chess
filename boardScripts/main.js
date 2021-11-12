@@ -81,29 +81,38 @@ const loadData = () => {
 
 const startCountDown = () => {
     let dateNow = new Date();
-    let countDownDate = new Date(dateNow.getFullYear(), dateNow.getMonth(), dateNow.getDate(), schoolW.moveTime[0], schoolW.moveTime[1], 0, 0).getTime()
+    const timesMs = [
+        new Date(dateNow.getFullYear(), dateNow.getMonth(), dateNow.getDate(), schoolB.executeTime[0], schoolB.executeTime[1], 0, 0).getTime(),
+        new Date(dateNow.getFullYear(), dateNow.getMonth(), dateNow.getDate(), schoolW.moveTime[0], schoolW.moveTime[1], 0, 0).getTime(),
+        new Date(dateNow.getFullYear(), dateNow.getMonth(), dateNow.getDate(), schoolB.tallyTime[0], schoolB.tallyTime[1], 0, 0).getTime()
+    ]
 
-    if (countDownDate - dateNow.getTime() < 0){
-        countDownDate = new Date(dateNow.getFullYear(), dateNow.getMonth(), dateNow.getDate(), schoolB.moveTime[0], schoolB.moveTime[1], 0, 0).getTime()
-
-        if (countDownDate - dateNow.getTime() < 0){
-            countDownDate = new Date(dateNow.getFullYear(), dateNow.getMonth(), dateNow.getDate() + 1, schoolW.moveTime[0], schoolW.moveTime[1], 0, 0).getTime()
+    let countDownTime;
+    for(let t = 0; t < timesMs.length; t++){
+        if (timesMs[t] - dateNow.getTime() > 0){
+            countDownTime = timesMs[t]
+            break
         }
+    }
+    if (countDownTime === undefined){
+        countDownTime = new Date(dateNow.getFullYear(), dateNow.getMonth(), dateNow.getDate() + 1, schoolB.executeTime[0], schoolB.executeTime[1], 0, 0).getTime()
     }
 
     timer = document.getElementById("countdown")
     const countDown = () => {
-        let now = new Date().getTime();
-        let distance = countDownDate - now;
+        dateNow = new Date().getTime();
+        let remTime = countDownTime - dateNow;
 
-        let hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-        let minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-        let seconds = Math.floor((distance % (1000 * 60)) / 1000);
+        let hours = Math.floor((remTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        let minutes = Math.floor((remTime % (1000 * 60 * 60)) / (1000 * 60));
+        let seconds = Math.floor((remTime % (1000 * 60)) / 1000);
 
         timer.innerHTML = `${hours}:${minutes}:${seconds}`;
 
-        if (distance < 0) {
-            timer.innerHTML = 'EXPIRED';
+        if (remTime < 0) {
+            clearInterval(countDown);
+            timer.innerHTML = '0:0:0'
+            location.reload();
         }
     }
 
