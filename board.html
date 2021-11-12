@@ -6,29 +6,56 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
+
     <meta name="google-signin-client_id">
     <link rel="stylesheet" href="chessboard-1.0.0.min.css">
 
     <script src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
     <script src="chessboard-1.0.0.min.js"></script>
+
+    <style>
+        body{background-color: black;}
+
+        button{
+            background-color: #4CAF50;
+            height:45px;
+            width:160px;
+            border: none;
+            color: white;
+            text-align: center;
+            text-decoration: none;
+            font-size: 20px;
+            font-family: 'Arial Black';
+            cursor: pointer;
+        }
+
+        .text{
+            font-size: 20px;
+            color: white;
+            font-family: 'Arial Black';
+        }
+    </style>
+    
+    <style>
+        #undo{margin: 6px 0px;}
+        #sendData{margin: 0px 0px 3px 0px;}
+        #OAuthButton{margin: 3px 0px 0px 0px;}
+        #status{margin: 4px 0px 0px 0px;}
+    </style>
 </head>
 
 <body>
-   <div id="board" style="width: 400px"></div>
+   <div id="board" style="width: 500px"></div>
 
-   <button id="undo">undo</button><br>
-   <button id="sendData">sendData</button><div id = "response"></div>
+   <button id="undo">Undo Move</button><br>
+   <button id="sendData">Submit Move</button><div id = "response" class="text"></div>
 
    <script src="chess.js"></script>
    <script src="main.js"></script>
 
-    <div id = "OAuthButton" class="g-signin2" data-onsuccess="onSignIn"></div>
+    <div id="OAuthButton" class="g-signin2" data-width="160" data-height="45" data-theme="dark" data-onsuccess="onSignIn"></div>
 
-    <label>Status:</label>
-    <div id="status"></div>
-
-
+    <div id="status" class="text">Status</div>
+    <div id="countdown" class="text"></div>
 </body>
-
 </html>

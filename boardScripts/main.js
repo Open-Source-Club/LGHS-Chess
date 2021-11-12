@@ -74,8 +74,56 @@ const loadData = () => {
             onSnapEnd: onSnapEnd
         })
 
+        startCountDown()
         updateStatus()
     };
+}
+
+const startCountDown = () => {
+    let dateNow = new Date();
+    const timesMs = [
+        new Date(dateNow.getFullYear(), dateNow.getMonth(), dateNow.getDate(), schoolB.executeTime[0], schoolB.executeTime[1], 0, 0).getTime(),
+        new Date(dateNow.getFullYear(), dateNow.getMonth(), dateNow.getDate(), schoolW.moveTime[0], schoolW.moveTime[1], 0, 0).getTime(),
+        new Date(dateNow.getFullYear(), dateNow.getMonth(), dateNow.getDate(), schoolB.tallyTime[0], schoolB.tallyTime[1], 0, 0).getTime()
+    ]
+
+    let countDownTime;
+    for(let t = 0; t < timesMs.length; t++){
+        if (timesMs[t] - dateNow.getTime() > 0){
+            countDownTime = timesMs[t]
+            break
+        }
+    }
+    if (countDownTime === undefined){
+        countDownTime = new Date(dateNow.getFullYear(), dateNow.getMonth(), dateNow.getDate() + 1, schoolB.executeTime[0], schoolB.executeTime[1], 0, 0).getTime()
+    }
+
+    timer = document.getElementById("countdown")
+    const countDown = () => {
+        dateNow = new Date().getTime();
+        let remTime = countDownTime - dateNow;
+
+        let hours = Math.floor((remTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        let minutes = Math.floor((remTime % (1000 * 60 * 60)) / (1000 * 60));
+        let seconds = Math.floor((remTime % (1000 * 60)) / 1000);
+
+        timer.innerHTML = `${hours}:${minutes}:${seconds}`;
+
+        if (remTime < 0) {
+            clearInterval(countDown);
+            timer.innerHTML = '0:0:0'
+            location.reload();
+        }
+    }
+
+    setInterval(countDown, 1000);
+    countDown()
+}
+
+const checkMobil = () => {
+    if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)){
+        $('#board').css({"width": screen.width - 14})
+    }
 }
 
 const undoMove = () => {
@@ -84,6 +132,7 @@ const undoMove = () => {
     move = null
     board.position(chess.fen())
 }
+
 const postData = () => {
     if (moveConfirmed === true){return 'Already Moved Today'}
     if (move === null){return 'No Move'}
@@ -109,12 +158,12 @@ const postData = () => {
         console.log(xhr.status)
         console.log(xhr.response)
         if (xhr.status === 200){
-            $('#response').html(xhr.response).css({"color": "green", "font-size": "125%"})
+            $('#response').html(xhr.response).css({"color": "green"})
             moveConfirmed = true;
             console.log(move)
         }
         else{
-            $('#response').html(xhr.response).css({"color": "red", "font-size": "125%"})
+            $('#response').html(xhr.response).css({"color": "red"})
             moveConfirmed = true;
             console.log(move)
         }
@@ -131,11 +180,12 @@ function onSignIn(googleUser) {
     console.log(domain)
 }
 
+checkMobil()
 loadData()
 $('#undo').on('click', undoMove)
 document.getElementById("sendData").onclick = function (){
     result = postData()
     if (result != 'Sent Form Data'){
-        $('#response').html(result).css({"color": "red", "font-size": "125%"})
+        $('#response').html(result).css({"color": "red"})
     }
 }
