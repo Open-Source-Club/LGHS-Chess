@@ -120,12 +120,19 @@ const startCountDown = () => {
     countDown()
 }
 
+const checkMobil = () => {
+    if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)){
+        $('#board').css({"width": screen.width - 14})
+    }
+}
+
 const undoMove = () => {
     if (moveConfirmed === true){return 'Already Moved'}
     chess.undo()
     move = null
     board.position(chess.fen())
 }
+
 const postData = () => {
     if (moveConfirmed === true){return 'Already Moved Today'}
     if (move === null){return 'No Move'}
@@ -151,12 +158,12 @@ const postData = () => {
         console.log(xhr.status)
         console.log(xhr.response)
         if (xhr.status === 200){
-            $('#response').html(xhr.response).css({"color": "green", "font-size": "125%"})
+            $('#response').html(xhr.response).css({"color": "green"})
             moveConfirmed = true;
             console.log(move)
         }
         else{
-            $('#response').html(xhr.response).css({"color": "red", "font-size": "125%"})
+            $('#response').html(xhr.response).css({"color": "red"})
             moveConfirmed = true;
             console.log(move)
         }
@@ -173,11 +180,12 @@ function onSignIn(googleUser) {
     console.log(domain)
 }
 
+checkMobil()
 loadData()
 $('#undo').on('click', undoMove)
 document.getElementById("sendData").onclick = function (){
     result = postData()
     if (result != 'Sent Form Data'){
-        $('#response').html(result).css({"color": "red", "font-size": "125%"})
+        $('#response').html(result).css({"color": "red"})
     }
 }
