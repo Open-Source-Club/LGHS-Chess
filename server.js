@@ -301,6 +301,14 @@ function createHTTPSServer(){
     }
 }
 
+function enableTestMove(){
+    app.post('/testMove', async (req, res) => {
+        await tallyMoves()
+        await executeMove()
+        res.send('Tallied and Executed')
+    })
+}
+
 app.get('/', (req, res) => {res.sendFile(__dirname + '/board.html')})
 app.get('/fetchData', (req, res) => {res.json({fen: chess.fen(), OAuthId: config.OAuthId, schoolW: config.schoolW, schoolB: config.schoolB})})
 app.get('/boardView', (req, res) => {res.sendFile(__dirname + '/boardView.html')})
@@ -322,12 +330,6 @@ app.post('/', async (req, res) => {
     res.send(result)
 })
 
-app.post('/testPost', async (req, res) => {
-    await tallyMoves()
-    await executeMove()
-    res.send('Tallied and Executed')
-})
-
 ;(async () => {
     await mongoConnect()
     await loadBoard()
@@ -335,8 +337,13 @@ app.post('/testPost', async (req, res) => {
     console.log('Starting server...')
     app.listen(80)
     
-    if (config.production != true){console.log('Production: False'); return}
-    console.log('Production: True')
-    createHTTPSServer()
-    scheculeCron()
+    if (config.production === true){
+        console.log('Production: True')
+        createHTTPSServer()
+        scheculeCron()
+    }
+    else{
+        console.log('Production: False')
+        enableTestMove()
+    }
 })()
