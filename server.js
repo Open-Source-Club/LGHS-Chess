@@ -1,6 +1,6 @@
 const express = require('express')
 const axios = require('axios')
-const CronJob = require('cron').CronJob;
+const CronJob = require('cron').CronJob
 const favicon = require('serve-favicon')
 const { Chess } = require('chess.js')
 const { MongoClient } = require('mongodb')
@@ -8,40 +8,14 @@ const { OAuth2Client } = require('google-auth-library')
 
 const fs = require('fs')
 const https = require('https')
-const http = require('http')
 
 try{var config = require('./myConfig.json')}
 catch(error){var config = require('./config.json')}
 
 const app = express()
 
-const keyPath = '/etc/letsencrypt/live/lghsopensource.club/';
-
-var credentials = {
-    valid: true
-};
-
-try {
-    credentials.key = fs.readFileSync(keyPath + 'privkey.pem', 'utf8');
-    credentials.cert = fs.readFileSync(keyPath + 'cert.pem', 'utf8');
-    credentials.ca = fs.readFileSync(keyPath + 'chain.pem', 'utf8');
-} catch (err) {
-    console.log("WARNING: Error reading SSL keys! HTTPS will be disabled!");
-    console.log(err.message);
-    credentials.valid = false;
-}
-
 app.use(express.json())
 app.use(favicon(__dirname + '/favicon.ico'))
-
-// Redirect HTTP to HTTPS if credentials are valid
-app.use(function(request, response, next) {
-    if (credentials.valid && !request.secure) {
-        return response.redirect('https://' + request.headers.host + request.url);
-    }
-
-    next();
-})
 
 const oAuthClient = new OAuth2Client(config.OAuthId)
 
@@ -284,7 +258,6 @@ async function userWebhook(name, move){
 }
 
 async function scheculeCron(){
-    if (config.production != true){console.log('Not Production'); return}
     const whiteMove = new CronJob(`0 ${config.schoolW.moveTime[1]} ${config.schoolW.moveTime[0]} * * *`, async function() {
         await tallyMoves(); await executeMove()}, 
         null, true, 'America/Los_Angeles')
@@ -301,6 +274,31 @@ async function scheculeCron(){
     blackTally.start()
     blackExecute.start()
     console.log('Scheduled Cron')
+}
+
+function createHTTPSServer(){
+    let credentials = {valid: true}
+    try {
+        credentials.key = fs.readFileSync(config.SSLKeyPath + 'privkey.pem', 'utf8')
+        credentials.cert = fs.readFileSync(config.SSLKeyPath + 'cert.pem', 'utf8')
+        credentials.ca = fs.readFileSync(config.SSLKeyPath + 'chain.pem', 'utf8')
+    }
+    catch (err) {
+        console.log('Error reading SSL keys, HTTPS will be disabled')
+        credentials.valid = false
+    }
+
+    // Redirect HTTP to HTTPS if credentials are valid
+    app.use(function(request, response, next) {
+        if (credentials.valid && !request.secure) {
+            return response.redirect('https://' + request.headers.host + request.url)
+        }
+
+        next()
+    })
+    if (credentials.valid) {
+        https.createServer(credentials, app).listen(443)
+    }
 }
 
 app.get('/', (req, res) => {res.sendFile(__dirname + '/board.html')})
@@ -335,11 +333,10 @@ app.post('/testPost', async (req, res) => {
     await loadBoard()
 
     console.log('Starting server...')
-    
     app.listen(80)
-    if (credentials.valid) {
-        https.createServer(credentials, app).listen(443);
-    }
     
+    if (config.production != true){console.log('Production: False'); return}
+    console.log('Production: True')
+    createHTTPSServer()
     scheculeCron()
 })()
