@@ -106,3 +106,9 @@ response = JSON.parse(xhr.response)
         turn = response.turn === 'w' ? 'white' : 'black'
 
 JSON parsing example
+
+Config gameStartDate:
+    Months: 0 - 11
+    Days: 1 - 31
+    Hours: 0 - 23
+    Minutes: 0 - 59 (1min == 1min)
