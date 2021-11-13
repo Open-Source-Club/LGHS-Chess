@@ -362,7 +362,7 @@ app.post('/', async (req, res) => {
     res.send(result)
 })
 
-app.get('/fetchData', (req, res) => {res.json({fen: chess.fen(), OAuthId: config.OAuthId, schoolW: config.schoolW, schoolB: config.schoolB})})
+app.get('/fetchData', (req, res) => {res.json({fen: chess.fen(), OAuthId: config.OAuthId, schoolW: config.schoolW, schoolB: config.schoolB, gameStartDate: config.gameStartDate})})
 app.get('/boardView', (req, res) => {res.sendFile(__dirname + '/boardView.html')})
 
 ;(async () => {
