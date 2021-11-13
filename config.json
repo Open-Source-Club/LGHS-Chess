@@ -1,5 +1,6 @@
 {
     "production": false,
+    "gameStartDate": [0, 0, 0, 0],
     
     "OAuthId": "",
     "domain": "",
@@ -15,7 +16,7 @@
         "domain": "",
         "color1": "",
         "color2": "",
-        "moveTime": []
+        "moveTime": [0, 0]
     },
     "schoolB": {
         "name": "",
@@ -23,7 +24,7 @@
         "domain": "",
         "color1": "",
         "color2": "",
-        "tallyTime": [],
-        "executeTime": []
+        "tallyTime": [0, 0],
+        "executeTime": [0, 0]
     }    
 }

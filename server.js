@@ -13,11 +13,11 @@ try{var config = require('./myConfig.json')}
 catch(error){var config = require('./config.json')}
 
 const app = express()
-
 app.use(express.json())
 app.use(favicon(__dirname + '/favicon.ico'))
 
 const oAuthClient = new OAuth2Client(config.OAuthId)
+let gameStarted = false
 
 app.use(express.static('boardScripts'))
 app.use(express.static('boardDependencies/js'))
@@ -34,6 +34,7 @@ let movesDB
 let whiteUsersDB
 let blackUsersDB
 async function mongoConnect(){
+    console.log('Connecting To MongoDB...')
     const client = await MongoClient.connect(config.mongoUrl, { useNewUrlParser: true, useUnifiedTopology: true })
     
     const db = client.db('lghsChess')
@@ -257,7 +258,7 @@ async function userWebhook(name, move){
 
 }
 
-async function scheculeCron(){
+async function scheculeMoves(){
     const whiteMove = new CronJob(`0 ${config.schoolW.moveTime[1]} ${config.schoolW.moveTime[0]} * * *`, async function() {
         await tallyMoves(); await executeMove()}, 
         null, true, 'America/Los_Angeles')
@@ -273,7 +274,7 @@ async function scheculeCron(){
     whiteMove.start()
     blackTally.start()
     blackExecute.start()
-    console.log('Scheduled Cron')
+    console.log('Scheduled Moves')
 }
 
 function createHTTPSServer(){
@@ -296,9 +297,39 @@ function createHTTPSServer(){
 
         next()
     })
-    if (credentials.valid) {
+    if (credentials.valid === true) {
+        console.log('Starting HTTPS Server...')
         https.createServer(credentials, app).listen(443)
     }
+}
+
+function gameStartCheck(){
+    const dateNow = new Date(new Date().toLocaleString('en-US', {timeZone : 'America/Los_Angeles'}))
+    const startDateMs = new Date(
+        new Date(
+            dateNow.getFullYear(), config.gameStartDate[0], config.gameStartDate[1], config.gameStartDate[2], config.gameStartDate[3], 0, 0
+        ).toLocaleString('en-US', {timeZone : 'America/Los_Angeles'})
+    )
+
+    if (startDateMs - dateNow.getTime() > 0){
+        console.log("Waiting For Game To Start")
+        
+        const cronStr = `0 ${config.gameStartDate[3].toString()} ${config.gameStartDate[2].toString()} ${config.gameStartDate[1].toString()} ${config.gameStartDate[0].toString()} *`
+        const startGame = new CronJob(cronStr, function() {
+            gameStarted = true
+            scheculeMoves()
+            console.log("Game Started")
+            
+            startGame.stop()
+        }, null, true, 'America/Los_Angeles')
+
+        startGame.start()
+        return
+    }
+
+    gameStarted = true
+    scheculeMoves()
+    console.log("Game Started")
 }
 
 function enableTestMove(){
@@ -309,9 +340,10 @@ function enableTestMove(){
     })
 }
 
-app.get('/', (req, res) => {res.sendFile(__dirname + '/board.html')})
-app.get('/fetchData', (req, res) => {res.json({fen: chess.fen(), OAuthId: config.OAuthId, schoolW: config.schoolW, schoolB: config.schoolB})})
-app.get('/boardView', (req, res) => {res.sendFile(__dirname + '/boardView.html')})
+app.get('/', (req, res) => {
+    if (gameStarted === true){res.sendFile(__dirname + '/board.html')}
+    else {res.sendFile(__dirname + '/waitPage.html')}
+})
 
 app.post('/', async (req, res) => {
     if (verifyRequest(req.body) != 'Valid Request'){
@@ -330,20 +362,25 @@ app.post('/', async (req, res) => {
     res.send(result)
 })
 
+app.get('/fetchData', (req, res) => {res.json({fen: chess.fen(), OAuthId: config.OAuthId, schoolW: config.schoolW, schoolB: config.schoolB, gameStartDate: config.gameStartDate})})
+app.get('/boardView', (req, res) => {res.sendFile(__dirname + '/boardView.html')})
+
 ;(async () => {
     await mongoConnect()
     await loadBoard()
 
-    console.log('Starting server...')
+    console.log('Starting HTTP Server...')
     app.listen(80)
     
     if (config.production === true){
         console.log('Production: True')
         createHTTPSServer()
-        scheculeCron()
+        gameStartCheck()
     }
     else{
         console.log('Production: False')
         enableTestMove()
+        gameStarted = true
+        console.log("Game Started")
     }
 })()
