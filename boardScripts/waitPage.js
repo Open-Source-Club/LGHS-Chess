@@ -5,7 +5,6 @@ const main = () => {
     
     xhr.onload = () => {
         startDate = JSON.parse(xhr.response).gameStartDate
-        console.log(startDate)
         countDown(startDate)
        
     };
@@ -25,11 +24,11 @@ const countDown = (startDate) => {
         let minutes = Math.floor((remTime % (1000 * 60 * 60)) / (1000 * 60));
         let seconds = Math.floor((remTime % (1000 * 60)) / 1000);
 
-        timer.innerHTML = `Game Starts In ${days}d ${hours}h ${minutes}m ${seconds}s`;
+        timer.innerHTML = `Game Starts In: ${days}d ${hours}h ${minutes}m ${seconds}s`;
 
         if (remTime < 0) {
             clearInterval(countDown);
-            timer.innerHTML = 'Game Starts In 0d 0h 0m 0s'
+            timer.innerHTML = 'Game Starts In: 0d 0h 0m 0s'
             location.reload();
         }
     }

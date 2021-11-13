@@ -98,7 +98,7 @@ const startCountDown = () => {
         countDownTime = new Date(dateNow.getFullYear(), dateNow.getMonth(), dateNow.getDate() + 1, schoolB.executeTime[0], schoolB.executeTime[1], 0, 0).getTime()
     }
 
-    const timer = document.getElementById("countdown")
+    timer = document.getElementById("countdown")
     const countDown = () => {
         dateNow = new Date().getTime();
         let remTime = countDownTime - dateNow;
