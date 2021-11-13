@@ -1,16 +1,18 @@
 const express = require('express')
 const axios = require('axios')
-const CronJob = require('cron').CronJob;
+const CronJob = require('cron').CronJob
 const favicon = require('serve-favicon')
 const { Chess } = require('chess.js')
 const { MongoClient } = require('mongodb')
 const { OAuth2Client } = require('google-auth-library')
 
+const fs = require('fs')
+const https = require('https')
+
 try{var config = require('./myConfig.json')}
 catch(error){var config = require('./config.json')}
 
 const app = express()
-const port = 8080
 
 app.use(express.json())
 app.use(favicon(__dirname + '/favicon.ico'))
@@ -256,7 +258,6 @@ async function userWebhook(name, move){
 }
 
 async function scheculeCron(){
-    if (config.production != true){console.log('Not Production'); return}
     const whiteMove = new CronJob(`0 ${config.schoolW.moveTime[1]} ${config.schoolW.moveTime[0]} * * *`, async function() {
         await tallyMoves(); await executeMove()}, 
         null, true, 'America/Los_Angeles')
@@ -273,6 +274,39 @@ async function scheculeCron(){
     blackTally.start()
     blackExecute.start()
     console.log('Scheduled Cron')
+}
+
+function createHTTPSServer(){
+    let credentials = {valid: true}
+    try {
+        credentials.key = fs.readFileSync(config.SSLKeyPath + 'privkey.pem', 'utf8')
+        credentials.cert = fs.readFileSync(config.SSLKeyPath + 'cert.pem', 'utf8')
+        credentials.ca = fs.readFileSync(config.SSLKeyPath + 'chain.pem', 'utf8')
+    }
+    catch (err) {
+        console.log('Error reading SSL keys, HTTPS will be disabled')
+        credentials.valid = false
+    }
+
+    // Redirect HTTP to HTTPS if credentials are valid
+    app.use(function(request, response, next) {
+        if (credentials.valid && !request.secure) {
+            return response.redirect('https://' + request.headers.host + request.url)
+        }
+
+        next()
+    })
+    if (credentials.valid) {
+        https.createServer(credentials, app).listen(443)
+    }
+}
+
+function enableTestMove(){
+    app.post('/testMove', async (req, res) => {
+        await tallyMoves()
+        await executeMove()
+        res.send('Tallied and Executed')
+    })
 }
 
 app.get('/', (req, res) => {res.sendFile(__dirname + '/board.html')})
@@ -296,16 +330,20 @@ app.post('/', async (req, res) => {
     res.send(result)
 })
 
-app.post('/testPost', async (req, res) => {
-    await tallyMoves()
-    await executeMove()
-    res.send('Tallied and Executed')
-})
-
 ;(async () => {
-   await mongoConnect()
-   await loadBoard()
-   
-   app.listen(port, () => console.log(`This app is listening on port ${port}`))
-   scheculeCron()
+    await mongoConnect()
+    await loadBoard()
+
+    console.log('Starting server...')
+    app.listen(80)
+    
+    if (config.production === true){
+        console.log('Production: True')
+        createHTTPSServer()
+        scheculeCron()
+    }
+    else{
+        console.log('Production: False')
+        enableTestMove()
+    }
 })()

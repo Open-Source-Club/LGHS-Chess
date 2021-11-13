@@ -3,6 +3,7 @@
     
     "OAuthId": "",
     "domain": "",
+    "SSLKeyPath": "",
     
     "userWebhookUrl": "",
     "moveWebhookUrl": "",
