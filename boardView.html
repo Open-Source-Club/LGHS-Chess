@@ -10,25 +10,14 @@
     <script src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
     <link rel="stylesheet" href="chessboard-1.0.0.min.css">
     <script src="chessboard-1.0.0.min.js"></script>
-
-    <style>
-        .small-board {
-            display: inline-block;
-            margin-right: 5px;
-            width: 400px;
-        }
-        .boardText{
-            display: inline;
-    }
-    </style>
 </head>
 
-<body>
-    <div id="currentBoard" class="small-board"></div>
+<style>
+    body{margin: 0;}
+</style>
 
-    <div id="labels">
-        <h1 id="currentBoardDate"class="boardText">Current Board</h1>
-    </div>
+<body>
+    <div id="board" style="width: 500px"></div>
 
     <script src="chess.js"></script>
     <script src="boardView.js"></script>

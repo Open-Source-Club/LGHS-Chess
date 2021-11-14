@@ -5,6 +5,7 @@ const favicon = require('serve-favicon')
 const { Chess } = require('chess.js')
 const { MongoClient } = require('mongodb')
 const { OAuth2Client } = require('google-auth-library')
+const puppeteer = require('puppeteer');
 
 const fs = require('fs')
 const https = require('https')
@@ -20,12 +21,21 @@ const oAuthClient = new OAuth2Client(config.OAuthId)
 let gameStarted = false
 
 app.use(express.static('boardScripts'))
+app.use(express.static('boardCaptures'))
 app.use(express.static('boardDependencies/js'))
 app.use(express.static('boardDependencies/css'))
 app.use(express.static('boardDependencies/img/chesspieces/wikipedia'))
 
 let chess = null
 let pendingMove = []
+const pieceMap = {
+    k: 'King',
+    q: 'Queen',
+    r: 'Rook',
+    b: 'Bishop',
+    n: 'Knight',
+    p: 'Pawn'
+}
 
 const schoolWColors = [Number(config.schoolW.color1), Number(config.schoolW.color2)]
 const schoolBColors = [Number(config.schoolB.color1), Number(config.schoolB.color2)]
@@ -41,6 +51,14 @@ async function mongoConnect(){
     movesDB = db.collection('moves')
     whiteUsersDB = db.collection(`${config.schoolW.nameAbrv.toLowerCase()}Users`)
     blackUsersDB = db.collection(`${config.schoolB.nameAbrv.toLowerCase()}Users`)
+}
+
+let browser;
+async function startBrowser(){
+    console.log('Launching Browser...')
+    browser = await puppeteer.launch();
+    browser = await browser.newPage();
+    browser.setViewport({ width: 500, height: 500 })
 }
 
 async function loadBoard(){
@@ -194,12 +212,14 @@ async function executeMove(){
 }
 
 async function userWebhook(name, move){
-    const date = new Date(new Date().toLocaleString('en-US', {timeZone : 'America/Los_Angeles'}))
-    const dateStr = `${date.getMonth()}-${date.getDate()}-${date.getFullYear()}`
-    const turn = chess.turn()
+    const date = new Date()
 
-    color1 = turn === 'w' ? schoolWColors[0] : schoolBColors[0]
-    color2 = null
+    const turn = chess.turn()
+    const color1 = turn === 'w' ? schoolWColors[0] : schoolBColors[0]
+    let color2 = null
+    
+    let from;
+    let to;
     if (name === null){
         from = move[0]
         to = move[1]
@@ -214,35 +234,28 @@ async function userWebhook(name, move){
     }
     else {from = move.from; to = move.to}
 
+    const fileName = `${name}:${Date.now()}.png`
+    await browser.goto(`http://localhost/boardView?fen=${chess.fen()}&from=${from}&to=${to}`.split(' ').join('$'));
+    await browser.screenshot({path: `boardCaptures/${fileName}`});
+
     data = {
-        username: name,
         embeds: [{
-            title: `Click To See ${name}'s Move`,
-            url: `${config.domain}/boardView?name=${name}&date=${dateStr}&from=${from}&to=${to}&fen=${chess.fen()}`.split(' ').join('$'),
+            title: `${name}: ${pieceMap[chess.get(from).type]} ➞ ${to.toUpperCase()}`,
             color: color2 === null ? color1 : color2,
-            fields: [
-                {
-                    name: 'From:',
-                    value: from,
-                    inline: true
-                },
-                {
-                    name: 'To:',
-                    value: to,
-                    inline: true
-                }
-            ],
-            'timestamp': date
+            image: {
+                url: config.production ? `${config.domain}/${fileName}` : 'https://via.placeholder.com/500'
+            },
+            timestamp: date
         }]
     }
 
     axios
         .post(config.userWebhookUrl, data)
         .then(res => {
-        console.log(`statusCode: ${res.status}`)
+            console.log(`webhookStatusCode: ${res.status}`)
         })
         .catch(error => {
-        console.error(error)
+            console.log('Axios Error')
         })
 
     if (color2 === null){return 'Sent User Webhook'}
@@ -250,10 +263,10 @@ async function userWebhook(name, move){
     axios
         .post(config.moveWebhookUrl, data)
         .then(res => {
-        console.log(`statusCode: ${res.status}`)
+            console.log(`webhookStatusCode: ${res.status}`)
         })
         .catch(error => {
-        console.error(error)
+            console.log('Axios Error')
         })
 
 }
@@ -368,6 +381,7 @@ app.get('/boardView', (req, res) => {res.sendFile(__dirname + '/boardView.html')
 ;(async () => {
     await mongoConnect()
     await loadBoard()
+    await startBrowser()
 
     console.log('Starting HTTP Server...')
     app.listen(80)
