@@ -56,7 +56,14 @@ async function mongoConnect(){
 let browser;
 async function startBrowser(){
     console.log('Launching Browser...')
-    browser = await puppeteer.launch();
+    browser = await puppeteer.launch({ 
+        args: [
+            '--no-sandbox',
+            '--disable-setuid-sandbox',
+            '--disable-gpu',
+            '--disable-dev-shm-usage'
+        ]
+    });
     browser = await browser.newPage();
     browser.setViewport({ width: 500, height: 500 })
 }
