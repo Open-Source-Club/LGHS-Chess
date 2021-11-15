@@ -241,7 +241,7 @@ async function userWebhook(name, move){
     }
     else {from = move.from; to = move.to}
 
-    const fileName = `${name}:${Date.now()}.png`
+    const fileName = `${name}_${Date.now()}.png`.split(' ').join('')
     await browser.goto(`http://localhost/boardView?fen=${chess.fen()}&from=${from}&to=${to}`.split(' ').join('$'));
     await browser.screenshot({path: `boardCaptures/${fileName}`});
 
