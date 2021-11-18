@@ -1,0 +1,10 @@
+curl \
+  -F 'payload_json={
+  "embeds": [{
+    "image": {
+      "url": "attachment://test.png"
+    }
+  }]
+}' \
+  -F "file1=@test.png" \
+  https://discord.com/api/webhooks/898002048660963349/UFLsplp92OjrGnyYB6XykDkG3AeO3wP9qreJFR4CXwpVBCZAqfUVoNuehbVrD2zhDIPo

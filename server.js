@@ -1,5 +1,5 @@
 const express = require('express')
-const axios = require('axios')
+const request = require('request');
 const CronJob = require('cron').CronJob
 const favicon = require('serve-favicon')
 const { Chess } = require('chess.js')
@@ -256,25 +256,38 @@ async function userWebhook(name, move){
         }]
     }
 
-    axios
-        .post(config.userWebhookUrl, data)
-        .then(res => {
-            console.log(`webhookStatusCode: ${res.status}`)
-        })
-        .catch(error => {
-            console.log('Axios Error')
-        })
+    const requestData = {
+        method: "POST",
+        url: "https://discord.com/api/webhooks/898002048660963349/UFLsplp92OjrGnyYB6XykDkG3AeO3wP9qreJFR4CXwpVBCZAqfUVoNuehbVrD2zhDIPo",
+        headers: {
+            "Content-Type": "multipart/form-data"
+        },
+        formData : {
+            file1 : fs.createReadStream(`boardCaptures/${fileName}`),
+            payload_json: JSON.stringify({
+                embeds: [{
+                    title: `${name}: ${pieceMap[chess.get(from).type]} ➞ ${to.toUpperCase()}`,
+                    color: color2 === null ? color1 : color2,
+                    image: {
+                        url: `attachment://${fileName}`
+                    }
+                }]
+            })
+        }
+    }
+
+    request(requestData, function (err, res, body) {
+        if(err) console.log(err)
+        console.log(body)
+    })
 
     if (color2 === null){return 'Sent User Webhook'}
-    data.embeds[0].color = color1
-    axios
-        .post(config.moveWebhookUrl, data)
-        .then(res => {
-            console.log(`webhookStatusCode: ${res.status}`)
-        })
-        .catch(error => {
-            console.log('Axios Error')
-        })
+
+    requestData.formData.payload_json.embeds[0].color = color1
+    request(requestData, function (err, res, body) {
+        if(err) console.log(err)
+        console.log(body)
+    })
 
 }
 
