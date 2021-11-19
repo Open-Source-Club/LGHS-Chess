@@ -7,7 +7,7 @@
     "SSLKeyPath": "",
     
     "userWebhookUrl": "",
-    "moveWebhookUrl": "",
+    "schoolWebhookUrl": "",
     "mongoUrl": "",
     
     "schoolW": {

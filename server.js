@@ -123,7 +123,7 @@ async function checkAndInsert(verifiedUser, move){
                 } 
             }]
         })
-        userWebhook(verifiedUser.name, move)
+        discordWebhook(verifiedUser.name, move)
         return 'Inserted New User'
     }
 
@@ -145,7 +145,7 @@ async function checkAndInsert(verifiedUser, move){
         } 
     })
 
-    userWebhook(verifiedUser.name, move)
+    discordWebhook(verifiedUser.name, move)
     return 'Inserted Move'
 }
 
@@ -209,7 +209,7 @@ async function tallyMoves(){ //tally and execute
 
 async function executeMove(){
     move = pendingMove[0].split(',')
-    await userWebhook(null, move)
+    await discordWebhook(null, move)
 
     const moveResult = chess.move({from: move[0], to: move[1], promotion: 'q'})
     await movesDB.insertOne({fen: chess.fen(), move: moveResult, date: pendingMove[1]})
@@ -218,7 +218,7 @@ async function executeMove(){
     console.log(`Executed Move: ${move}`)
 }
 
-async function userWebhook(name, move){
+async function discordWebhook(name, move){
     const date = new Date()
 
     const turn = chess.turn()
@@ -245,20 +245,9 @@ async function userWebhook(name, move){
     await browser.goto(`http://localhost/boardView?fen=${chess.fen()}&from=${from}&to=${to}`.split(' ').join('$'));
     await browser.screenshot({path: `boardCaptures/${fileName}`});
 
-    data = {
-        embeds: [{
-            title: `${name}: ${pieceMap[chess.get(from).type]} ➞ ${to.toUpperCase()}`,
-            color: color2 === null ? color1 : color2,
-            image: {
-                url: config.production ? `${config.domain}/${fileName}` : 'https://via.placeholder.com/500'
-            },
-            timestamp: date
-        }]
-    }
-
     const requestData = {
         method: "POST",
-        url: "https://discord.com/api/webhooks/898002048660963349/UFLsplp92OjrGnyYB6XykDkG3AeO3wP9qreJFR4CXwpVBCZAqfUVoNuehbVrD2zhDIPo",
+        url: config.userWebhookUrl,
         headers: {
             "Content-Type": "multipart/form-data"
         },
@@ -276,17 +265,26 @@ async function userWebhook(name, move){
         }
     }
 
-    request(requestData, function (err, res, body) {
-        if(err) console.log(err)
-        console.log(body)
+    request(requestData, function (err, res) {
+        if (err) console.log(err)
+        console.log(`Sent User Channel Webhook: ${res.statusCode}`)
     })
 
-    if (color2 === null){return 'Sent User Webhook'}
+    if (color2 === null) return
+    requestData.url = config.schoolWebhookUrl
+    requestData.formData.payload_json = JSON.stringify({
+        embeds: [{
+            title: `${name}: ${pieceMap[chess.get(from).type]} ➞ ${to.toUpperCase()}`,
+            color: color1,
+            image: {
+                url: `attachment://${fileName}`
+            }
+        }]
+    })
 
-    requestData.formData.payload_json.embeds[0].color = color1
-    request(requestData, function (err, res, body) {
+    request(requestData, function (err, res) {
         if(err) console.log(err)
-        console.log(body)
+        console.log(`Sent School Channel Webhook: ${res.statusCode}`)
     })
 
 }
