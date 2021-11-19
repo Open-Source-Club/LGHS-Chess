@@ -288,7 +288,8 @@ async function discordWebhook(name, move){
             color: color1,
             image: {
                 url: `attachment://${fileName}`
-            }
+            },
+            timestamp: date
         }]
     })
 
