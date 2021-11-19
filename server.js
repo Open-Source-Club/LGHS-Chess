@@ -16,6 +16,26 @@ const app = express()
 app.use(express.json())
 app.use(favicon(__dirname + '/favicon.ico'))
 
+let credentials = {valid: true}
+try {
+    credentials.key = fs.readFileSync(config.SSLKeyPath + 'privkey.pem', 'utf8')
+    credentials.cert = fs.readFileSync(config.SSLKeyPath + 'cert.pem', 'utf8')
+    credentials.ca = fs.readFileSync(config.SSLKeyPath + 'chain.pem', 'utf8')
+}
+catch (err) {
+    console.log('Error reading SSL keys, HTTPS will be disabled')
+    credentials.valid = false
+}
+
+// Redirect HTTP to HTTPS if credentials are valid
+app.use(function(request, response, next) {
+    if (credentials.valid && !request.secure) {
+        return response.redirect('https://' + request.headers.host + request.url)
+    }
+
+    next()
+})
+
 const oAuthClient = new OAuth2Client(config.OAuthId)
 let gameStarted = false
 
@@ -319,25 +339,6 @@ async function scheculeMoves(){
 }
 
 function createHTTPSServer(){
-    let credentials = {valid: true}
-    try {
-        credentials.key = fs.readFileSync(config.SSLKeyPath + 'privkey.pem', 'utf8')
-        credentials.cert = fs.readFileSync(config.SSLKeyPath + 'cert.pem', 'utf8')
-        credentials.ca = fs.readFileSync(config.SSLKeyPath + 'chain.pem', 'utf8')
-    }
-    catch (err) {
-        console.log('Error reading SSL keys, HTTPS will be disabled')
-        credentials.valid = false
-    }
-
-    // Redirect HTTP to HTTPS if credentials are valid
-    app.use(function(request, response, next) {
-        if (credentials.valid && !request.secure) {
-            return response.redirect('https://' + request.headers.host + request.url)
-        }
-
-        next()
-    })
     if (credentials.valid === true) {
         console.log('Starting HTTPS Server...')
         https.createServer(credentials, app).listen(443)
