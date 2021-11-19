@@ -6,7 +6,6 @@ const { Chess } = require('chess.js')
 const { MongoClient } = require('mongodb')
 const { OAuth2Client } = require('google-auth-library')
 const puppeteer = require('puppeteer');
-
 const fs = require('fs')
 const https = require('https')
 
@@ -210,12 +209,22 @@ async function tallyMoves(){ //tally and execute
 async function executeMove(){
     move = pendingMove[0].split(',')
     await discordWebhook(null, move)
+    clearBoardCaptures()
 
     const moveResult = chess.move({from: move[0], to: move[1], promotion: 'q'})
     await movesDB.insertOne({fen: chess.fen(), move: moveResult, date: pendingMove[1]})
 
     pendingMove = []
     console.log(`Executed Move: ${move}`)
+}
+
+async function clearBoardCaptures(){
+    fs.readdir('boardCaptures', (err, files) => {
+        for (const file of files) {
+            if (file.split('.')[1] != 'png') continue
+            fs.unlink(`boardCaptures/${file}`, err => {if (err) throw err})
+        }
+    })
 }
 
 async function discordWebhook(name, move){
@@ -259,7 +268,8 @@ async function discordWebhook(name, move){
                     color: color2 === null ? color1 : color2,
                     image: {
                         url: `attachment://${fileName}`
-                    }
+                    },
+                    timestamp: date
                 }]
             })
         }
@@ -286,7 +296,6 @@ async function discordWebhook(name, move){
         if(err) console.log(err)
         console.log(`Sent School Channel Webhook: ${res.statusCode}`)
     })
-
 }
 
 async function scheculeMoves(){
