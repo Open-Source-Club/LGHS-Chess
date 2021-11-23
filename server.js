@@ -271,7 +271,12 @@ async function discordWebhook(name, move){
     else {from = move.from; to = move.to}
 
     const fileName = `${name}_${Date.now()}.png`.split(' ').join('')
-    await browser.goto(`http://localhost/boardView?fen=${chess.fen()}&from=${from}&to=${to}`.split(' ').join('$'));
+    if(config.production === true && credentials.valid === true){
+        await browser.goto(`https://${config.domain}/boardView?fen=${chess.fen()}&from=${from}&to=${to}`.split(' ').join('$'))
+    }
+    else{
+        browser.goto(`http://localhost/boardView?fen=${chess.fen()}&from=${from}&to=${to}`.split(' ').join('$'))
+    }
     await browser.screenshot({path: `boardCaptures/${fileName}`});
 
     const requestData = {
@@ -379,7 +384,7 @@ function enableTestMove(){
         await tallyMoves()
         await executeMove()
         res.send('Tallied and Executed')
-    })
+    })  
 }
 
 app.get('/', (req, res) => {
