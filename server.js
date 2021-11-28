@@ -201,6 +201,7 @@ async function tallyMoves(){ //tally and execute
             }
         }
     }).toArray()
+    if (votedUsers.length === 0){console.log('No Moves To Tally'); return}
 
     let moveVotes = {}
     for (user in votedUsers){
@@ -227,7 +228,16 @@ async function tallyMoves(){ //tally and execute
 }
 
 async function executeMove(){
-    move = pendingMove[0].split(',')
+    if (pendingMove.length != 0){
+        move = pendingMove[0].split(',')
+    }
+    else {
+        possibleMoves = chess.moves({verbose: true})
+        randomMove = possibleMoves[Math.floor(Math.random() * possibleMoves.length)]
+        move = [randomMove.from, randomMove.to]
+        console.log('No Pending Move, Executing Random Move')
+    }
+
     await discordWebhook(null, move)
     clearBoardCaptures()
 
@@ -271,7 +281,12 @@ async function discordWebhook(name, move){
     else {from = move.from; to = move.to}
 
     const fileName = `${name}_${Date.now()}.png`.split(' ').join('')
-    await browser.goto(`http://localhost/boardView?fen=${chess.fen()}&from=${from}&to=${to}`.split(' ').join('$'));
+    if(config.production === true && credentials.valid === true){
+        await browser.goto(`https://${config.domain}/boardView?fen=${chess.fen()}&from=${from}&to=${to}`.split(' ').join('$'))
+    }
+    else{
+        browser.goto(`http://localhost/boardView?fen=${chess.fen()}&from=${from}&to=${to}`.split(' ').join('$'))
+    }
     await browser.screenshot({path: `boardCaptures/${fileName}`});
 
     const requestData = {
@@ -379,7 +394,7 @@ function enableTestMove(){
         await tallyMoves()
         await executeMove()
         res.send('Tallied and Executed')
-    })
+    })  
 }
 
 app.get('/', (req, res) => {
