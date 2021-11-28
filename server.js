@@ -201,6 +201,7 @@ async function tallyMoves(){ //tally and execute
             }
         }
     }).toArray()
+    if (votedUsers.length === 0){console.log('No Moves To Tally'); return}
 
     let moveVotes = {}
     for (user in votedUsers){
@@ -227,7 +228,16 @@ async function tallyMoves(){ //tally and execute
 }
 
 async function executeMove(){
-    move = pendingMove[0].split(',')
+    if (pendingMove.length != 0){
+        move = pendingMove[0].split(',')
+    }
+    else {
+        possibleMoves = chess.moves({verbose: true})
+        randomMove = possibleMoves[Math.floor(Math.random() * possibleMoves.length)]
+        move = [randomMove.from, randomMove.to]
+        console.log('No Pending Move, Executing Random Move')
+    }
+
     await discordWebhook(null, move)
     clearBoardCaptures()
 
