@@ -13,10 +13,20 @@ const main = () => {
 }
 
 const editPage = (school1, school2) => {
-    timeStr1 = timeToStr(school2.executeTime) + " - " + timeToStr(school1.moveTime)
-    timeStr2 = timeToStr(school1.moveTime) + " - " + timeToStr(school2.tallyTime)
+    let timeStr1 = timeToStr(school2.executeTime) + " - " + timeToStr(school1.moveTime)
+    let timeStr2 = timeToStr(school1.moveTime) + " - " + timeToStr(school2.tallyTime)
     document.getElementById("votingPeriod1").innerHTML = school1.nameAbrv + document.getElementById("votingPeriod1").innerHTML + timeStr1;
     document.getElementById("votingPeriod2").innerHTML = school2.nameAbrv + document.getElementById("votingPeriod2").innerHTML + timeStr2;
+	let p2str = document.getElementById("p2").innerHTML
+	while (p2str.indexOf("[school1]") != -1)
+	{
+		p2str = p2str.substring(0, p2str.indexOf("[school1]")) + school1.nameAbrv + p2str.substring(p2str.indexOf("[school1]") + 9)
+	}
+	while (p2str.indexOf("[school2]") != -1)
+	{
+		p2str = p2str.substring(0, p2str.indexOf("[school2]")) + school2.nameAbrv + p2str.substring(p2str.indexOf("[school2]") + 9)
+	}
+	document.getElementById("p2").innerHTML = p2str
 }
 
 //gets a time [hours, min] and converts to non-military time str
