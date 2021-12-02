@@ -4,10 +4,24 @@ const main = () => {
     xhr.send();
     
     xhr.onload = () => {
-        startDate = JSON.parse(xhr.response).gameStartDate
+        response = JSON.parse(xhr.response)
+        startDate = response.gameStartDate
+
+        editPage(response.schoolW, response.schoolB);
         countDown(startDate)
-       
     };
+}
+
+const editPage = (school1, school2) => {
+    timeStr1 = timeToStr(school2.executeTime) + " - " + timeToStr(school1.moveTime)
+    timeStr2 = timeToStr(school1.moveTime) + " - " + timeToStr(school2.tallyTime)
+    document.getElementById("votingPeriod1").innerHTML = school1.nameAbrv + document.getElementById("votingPeriod1").innerHTML + timeStr1;
+    document.getElementById("votingPeriod2").innerHTML = school2.nameAbrv + document.getElementById("votingPeriod2").innerHTML + timeStr2;
+}
+
+//gets a time [hours, min] and converts to non-military time str
+const timeToStr = (time) => {
+    return time[0] > 12 ? (time[0]-12) + ":" + time[1] + " pm" : time[0] + ":" + time[1] + " am"
 }
 
 const countDown = (startDate) => {
