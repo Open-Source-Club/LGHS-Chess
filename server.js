@@ -105,6 +105,7 @@ function verifyMove(move){
 }
 
 async function checkAndInsert(verifiedUser, move){
+    if (pendingMove.length != 0){return 'Already Pending Move'}
     if (verifiedUser === undefined){return 'Invalid OAuth Sign In'}
     else if (!(verifiedUser.domain === config.schoolW.domain || verifiedUser.domain === config.schoolB.domain)){return 'Not School Email'}
 
