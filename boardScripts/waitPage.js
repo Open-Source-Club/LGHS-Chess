@@ -44,8 +44,8 @@ const checkMobil = () => {
         
         document.getElementById("image").style = "width:" + (screen.width - 100) + "px;height:" + (screen.width - 100) + "px;"
         
-        let pSize = (parseInt(rs.getPropertyValue('--font-size-p').charAt(0)) + 2) + 'vw';
-        let hSize = (parseInt(rs.getPropertyValue('--font-size-h').charAt(0)) + 2) + 'vw';
+        let pSize = (parseInt(rs.getPropertyValue('--font-size-p').split('vw')[0]) + 2) + 'vw';
+        let hSize = (parseInt(rs.getPropertyValue('--font-size-h').charAt('vw')[0]) + 2) + 'vw';
     
         r.style.setProperty('--font-size-p', pSize);
         r.style.setProperty('--font-size-h', hSize);
