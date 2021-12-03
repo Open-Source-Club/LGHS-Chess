@@ -35,11 +35,20 @@ const timeToStr = (time) => {
     return time[0] > 12 ? (time[0]-12) + ":" + time[1] + " pm" : time[0] + ":" + time[1] + " am"
 }
 
+
 const checkMobil = () => {
     if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)){
+        
+        let r = document.querySelector(':root');
+        let rs = getComputedStyle(r);
+        
         document.getElementById("image").style = "width:" + (screen.width - 100) + "px;height:" + (screen.width - 100) + "px;"
-		document.documentElement.style.setProperty('--font-size-p', '4vw');
-        document.documentElement.style.setProperty('--font-size-h', '5vw');
+        
+        let pSize = (parseInt(rs.getPropertyValue('--font-size-p').charAt(0)) + 2) + 'vw';
+        let hSize = (parseInt(rs.getPropertyValue('--font-size-h').charAt(0)) + 2) + 'vw';
+    
+        r.style.setProperty('--font-size-p', pSize);
+        r.style.setProperty('--font-size-h', hSize);
 	}
 }
 
