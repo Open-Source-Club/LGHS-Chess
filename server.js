@@ -286,7 +286,7 @@ async function discordWebhook(name, move){
         await browser.goto(`https://${config.domain}/boardView?fen=${chess.fen()}&from=${from}&to=${to}`.split(' ').join('$'))
     }
     else{
-        browser.goto(`http://localhost/boardView?fen=${chess.fen()}&from=${from}&to=${to}`.split(' ').join('$'))
+        await browser.goto(`http://localhost/boardView?fen=${chess.fen()}&from=${from}&to=${to}`.split(' ').join('$'))
     }
     await browser.screenshot({path: `boardCaptures/${fileName}`});
 
