@@ -6,6 +6,7 @@ let schoolW
 let schoolB
 let move = null
 let moveConfirmed = false
+let votingClosed = false
 
 function onDragStart(source, piece, position, orientation) {
     document.body.style.overflow = 'hidden';
@@ -34,7 +35,7 @@ function onSnapEnd() {
 }
 
 function updateStatus() {
-    let status = ''
+    if (votingClosed === true){$('#status').html('Voting Closed'); return}
     school = chess.turn() === 'w' ? schoolW.nameAbrv: schoolB.nameAbrv
 
     if (chess.in_checkmate()) {status = `Game Over, ${school} Is In Checkmate.`}
@@ -96,6 +97,7 @@ const startCountDown = () => {
     }
     if (countDownTime === undefined){
         countDownTime = new Date(dateNow.getFullYear(), dateNow.getMonth(), dateNow.getDate() + 1, schoolB.executeTime[0], schoolB.executeTime[1], 0, 0).getTime()
+        votingClosed = true
     }
 
     timer = document.getElementById("countdown")
@@ -134,6 +136,7 @@ const undoMove = () => {
 }
 
 const postData = () => {
+    if (votingClosed === true){return 'Voting Closed'}
     if (moveConfirmed === true){return 'Already Moved Today'}
     if (move === null){return 'No Move'}
     if (domain === undefined){return "Not Signed In"}
@@ -158,7 +161,7 @@ const postData = () => {
         console.log(xhr.status)
         console.log(xhr.response)
         if (xhr.status === 200){
-            $('#response').html(xhr.response).css({"color": "green"})
+            $('#response').html('Move Submitted').css({"color": "green"})
             moveConfirmed = true;
             console.log(move)
         }
