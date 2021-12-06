@@ -18,9 +18,9 @@ app.use(favicon(__dirname + '/favicon.ico'))
 
 let credentials = {valid: true}
 try {
-    credentials.key = fs.readFileSync(config.SSLKeyPath + 'privkey.pem', 'utf8')
-    credentials.cert = fs.readFileSync(config.SSLKeyPath + 'cert.pem', 'utf8')
-    credentials.ca = fs.readFileSync(config.SSLKeyPath + 'chain.pem', 'utf8')
+    credentials.key = fs.readFileSync(`/etc/letsencrypt/live/${config.domain}/privkey.pem`, 'utf8')
+    credentials.cert = fs.readFileSync(`/etc/letsencrypt/live/${config.domain}/cert.pem`, 'utf8')
+    credentials.ca = fs.readFileSync(`/etc/letsencrypt/live/${config.domain}/chain.pem`, 'utf8')
 }
 catch (err) {
     console.log('Error reading SSL keys, HTTPS will be disabled')
@@ -39,11 +39,11 @@ app.use(function(request, response, next) {
 const oAuthClient = new OAuth2Client(config.OAuthId)
 let gameStarted = false
 
-app.use(express.static('boardScripts'))
-app.use(express.static('boardCaptures'))
-app.use(express.static('boardDependencies/js'))
-app.use(express.static('boardDependencies/css'))
-app.use(express.static('boardDependencies/img/chesspieces/wikipedia'))
+app.use(express.static('scrpits'))
+app.use(express.static('node_modules/chess.js'))
+app.use(express.static('dependencies/js'))
+app.use(express.static('dependencies/css'))
+app.use(express.static('dependencies/img/chesspieces/wikipedia'))
 
 let chess = null
 let pendingMove = []
@@ -399,8 +399,8 @@ function enableTestMove(){
 }
 
 app.get('/', (req, res) => {
-    if (gameStarted === true){res.sendFile(__dirname + '/board.html')}
-    else {res.sendFile(__dirname + '/waitPage.html')}
+    if (gameStarted === true){res.sendFile(__dirname + '/html/board.html')}
+    else {res.sendFile(__dirname + '/html/waitPage.html')}
 })
 
 app.post('/', async (req, res) => {
@@ -421,7 +421,7 @@ app.post('/', async (req, res) => {
 })
 
 app.get('/fetchData', (req, res) => {res.json({fen: chess.fen(), OAuthId: config.OAuthId, schoolW: config.schoolW, schoolB: config.schoolB, gameStartDate: config.gameStartDate})})
-app.get('/boardView', (req, res) => {res.sendFile(__dirname + '/boardView.html')})
+app.get('/boardView', (req, res) => {res.sendFile(__dirname + '/html/boardView.html')})
 
 ;(async () => {
     await mongoConnect()
