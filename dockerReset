@@ -3,6 +3,6 @@
 docker container rm chess -f
 
 docker build -t chess .
-docker run -v /etc/letsencrypt:/app -d -p 80:80 -p 443:443 --name chess chess
+docker run -v /etc/letsencrypt:/etc/letsencrypt -d -p 80:80 -p 443:443 --name chess chess
 
 docker image prune -f

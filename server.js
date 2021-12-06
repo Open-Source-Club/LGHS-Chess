@@ -18,9 +18,9 @@ app.use(favicon(__dirname + '/favicon.ico'))
 
 let credentials = {valid: true}
 try {
-    credentials.key = fs.readFileSync('privkey.pem', 'utf8')
-    credentials.cert = fs.readFileSync('cert.pem', 'utf8')
-    credentials.ca = fs.readFileSync('chain.pem', 'utf8')
+    credentials.key = fs.readFileSync(`/etc/letsencrypt/live/${config.domain}/privkey.pem`, 'utf8')
+    credentials.cert = fs.readFileSync(`/etc/letsencrypt/live/${config.domain}/cert.pem`, 'utf8')
+    credentials.ca = fs.readFileSync(`/etc/letsencrypt/live/${config.domain}/chain.pem`, 'utf8')
 }
 catch (err) {
     console.log('Error reading SSL keys, HTTPS will be disabled')
