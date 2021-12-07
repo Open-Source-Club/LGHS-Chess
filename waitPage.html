@@ -24,6 +24,17 @@
             font-size: 6vw;
             color: green;
         }
+
+        #image {
+            float:right;
+            border: 5px solid white;
+            width: 30%;
+        }
+
+        .mainText {
+            float: left;
+            width: 65%;
+        }
 		
 		p {
 		  font-size: var(--font-size-p);
@@ -36,26 +47,29 @@
 </head>
 <body>
     <div id="countdown"></div>
-	<h1>How LGHS Chess Works</h1>
+	<h1 class="mainText">How LGHS Chess Works</h1>
     
-    <p>
+    <img id="image" src="https://cdn.discordapp.com/attachments/616758839622107436/916998636120965120/unknown.png" alt="Vote Chess"> 
+
+    <p class="mainText">
     LGHS Chess is played between two schools.
     Anyone at the two participating schools can play.
     You can submit a move at any point during your school’s turn in the game.
     </p>
-    <p id="votingPeriod1">
+    
+    <p id="votingPeriod1" class="mainText">
     voting period: 
     </p>
-    <p id="votingPeriod2">
+    <p id="votingPeriod2" class="mainText">
     voting period: 
     </p>
-    <p id="p2">
+    <p id="p2" class="mainText">
     Once time is up, votes are tallied up and the move with the most votes is made on the board. Note, at the end of [school2]’s move, the votes will be tallied, but not displayed until the start of [school1]’s voting period the following morning to ensure each school has the same amount of decision-making time.
     </p>
     
-    <h1>How To Play LGHS Chess</h1>
+    <h1 class="mainText">How To Play LGHS Chess</h1>
 
-    <p>
+    <p class="mainText">
     To play, you must sign-in to your school-provided Google account.
     At the bottom of the screen, the display will show which school is to move.
     If it is your school’s move, click and drag your school’s chess piece to a valid square.
@@ -65,7 +79,6 @@
     You may only submit one move per turn cycle.
     </p>
         
-	<img id="image" src="https://cdn.discordapp.com/attachments/616758839622107436/916998636120965120/unknown.png" alt="Vote Chess" style="width: 30%;"> 
-    <script src="waitPage.js"></script>
+	<script src="waitPage.js"></script>
 </body>
 </html>

@@ -108,6 +108,9 @@ const startCountDown = () => {
         let hours = Math.floor((remTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
         let minutes = Math.floor((remTime % (1000 * 60 * 60)) / (1000 * 60));
         let seconds = Math.floor((remTime % (1000 * 60)) / 1000);
+        
+        minutes = minutes < 10 ? '0'+minutes : minutes;
+        seconds = seconds < 10 ? '0'+seconds : seconds;
 
         timer.innerHTML = `${hours}:${minutes}:${seconds}`;
 
