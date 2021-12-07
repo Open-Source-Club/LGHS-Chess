@@ -42,7 +42,7 @@ const checkMobil = () => {
         let r = document.querySelector(':root');
         let rs = getComputedStyle(r);
         
-        document.getElementById("image").style = "width:" + (screen.width - 100) + "px;height:" + (screen.width - 100) + "px;"
+        document.getElementById("image").style = "width:" + 90 + "%;height:" + 90 + "%;"
         
         let pSize = (parseInt(rs.getPropertyValue('--font-size-p').split('vw')[0]) + 2) + 'vw';
         let hSize = (parseInt(rs.getPropertyValue('--font-size-h').charAt('vw')[0]) + 2) + 'vw';
