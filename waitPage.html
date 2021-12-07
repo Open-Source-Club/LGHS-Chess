@@ -10,6 +10,8 @@
 		:root {
 			--font-size-p: 2vw;
 			--font-size-h: 3vw;
+            --img-side: right;
+            --txt-width: 65%;
 		}
 	
 		body {
@@ -26,14 +28,14 @@
         }
 
         #image {
-            float:right;
+            float: var(--img-side);
             border: 5px solid white;
             width: 30%;
         }
 
         .mainText {
             float: left;
-            width: 65%;
+            width: var(--txt-width);
         }
 		
 		p {
@@ -49,14 +51,14 @@
     <div id="countdown"></div>
 	<h1 class="mainText">How LGHS Chess Works</h1>
     
-    <img id="image" src="https://cdn.discordapp.com/attachments/616758839622107436/916998636120965120/unknown.png" alt="Vote Chess"> 
-
     <p class="mainText">
     LGHS Chess is played between two schools.
     Anyone at the two participating schools can play.
     You can submit a move at any point during your school’s turn in the game.
     </p>
     
+    <img id="image" src="https://cdn.discordapp.com/attachments/616758839622107436/916998636120965120/unknown.png" alt="Vote Chess"> 
+
     <p id="votingPeriod1" class="mainText">
     voting period: 
     </p>
@@ -78,7 +80,7 @@
     When you are ready to finalize your move, press the “SUBMIT” button below the Google sign-in.
     You may only submit one move per turn cycle.
     </p>
-        
+    
 	<script src="waitPage.js"></script>
 </body>
 </html>

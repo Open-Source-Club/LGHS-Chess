@@ -49,6 +49,9 @@ const checkMobil = () => {
     
         r.style.setProperty('--font-size-p', pSize);
         r.style.setProperty('--font-size-h', hSize);
+
+        r.style.setProperty('--txt-width', '100%');
+        r.style.setProperty('--img-side', 'left');
 	}
 }
 
