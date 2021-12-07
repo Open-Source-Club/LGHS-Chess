@@ -2,4 +2,4 @@ package-lock.json
 node_modules
 notes
 myConfig.json
-boardCaptures/*.png
+boardCaptures
