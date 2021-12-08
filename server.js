@@ -121,8 +121,6 @@ async function checkAndInsert(verifiedUser, move){
     
     const date = new Date(new Date().toLocaleString('en-US', {timeZone : 'America/Los_Angeles'}))
     const dateStr = `${date.getMonth()}-${date.getDate()}-${date.getFullYear()}`
-    const hours = date.getHours()
-
     const user = await collection.findOne({email: verifiedUser.email})
 
     if (user === null){
@@ -131,10 +129,7 @@ async function checkAndInsert(verifiedUser, move){
             name: verifiedUser.name,
             userId: verifiedUser.userId,
             moves: [{
-                dateTime: {
-                    date: dateStr,
-                    time: hours
-                },
+                date: dateStr,
                 move: {
                     from: move.from,
                     to: move.to
@@ -145,16 +140,13 @@ async function checkAndInsert(verifiedUser, move){
         return 'Inserted New User'
     }
 
-    else if (user.moves.at(-1).dateTime.date === dateStr && config.production == true){return 'Already Moved Today'}
+    else if (user.moves.at(-1).date === dateStr && config.production == true){return 'Already Moved Today'}
 
     await collection.updateOne(
         {name: verifiedUser.name},
         {$addToSet: {
             moves:{
-                dateTime: {
-                    date: dateStr,
-                    time: date.getHours()
-                },
+                date: dateStr,
                 move: {
                     from: move.from,
                     to: move.to
@@ -196,7 +188,7 @@ async function tallyMoves(){ //tally and execute
     const votedUsers = await collection.find({
         moves: {
             $elemMatch: {
-                'dateTime.date': dateStr
+                date: dateStr
             }
         }
     }).toArray()
