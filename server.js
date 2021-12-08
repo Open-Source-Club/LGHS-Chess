@@ -16,23 +16,21 @@ const app = express()
 app.use(express.json())
 app.use(favicon(__dirname + '/favicon.ico'))
 
-let credentials = {valid: true}
+let credentialsValid = true
 try {
     credentials.key = fs.readFileSync(`/etc/letsencrypt/live/${config.domain}/privkey.pem`, 'utf8')
     credentials.cert = fs.readFileSync(`/etc/letsencrypt/live/${config.domain}/cert.pem`, 'utf8')
     credentials.ca = fs.readFileSync(`/etc/letsencrypt/live/${config.domain}/chain.pem`, 'utf8')
 }
 catch (err) {
-    console.log('Error reading SSL keys, HTTPS will be disabled')
-    credentials.valid = false
+    credentialsValid = false
 }
 
 // Redirect HTTP to HTTPS if credentials are valid
 app.use(function(request, response, next) {
-    if (credentials.valid && !request.secure) {
+    if (credentialsValid && !request.secure) {
         return response.redirect('https://' + request.headers.host + request.url)
     }
-
     next()
 })
 
@@ -123,8 +121,6 @@ async function checkAndInsert(verifiedUser, move){
     
     const date = new Date(new Date().toLocaleString('en-US', {timeZone : 'America/Los_Angeles'}))
     const dateStr = `${date.getMonth()}-${date.getDate()}-${date.getFullYear()}`
-    const hours = date.getHours()
-
     const user = await collection.findOne({email: verifiedUser.email})
 
     if (user === null){
@@ -133,10 +129,7 @@ async function checkAndInsert(verifiedUser, move){
             name: verifiedUser.name,
             userId: verifiedUser.userId,
             moves: [{
-                dateTime: {
-                    date: dateStr,
-                    time: hours
-                },
+                date: dateStr,
                 move: {
                     from: move.from,
                     to: move.to
@@ -147,16 +140,13 @@ async function checkAndInsert(verifiedUser, move){
         return 'Inserted New User'
     }
 
-    else if (user.moves.at(-1).dateTime.date === dateStr){return 'Already Moved Today'}
+    else if (user.moves.at(-1).date === dateStr && config.production == true){return 'Already Moved Today'}
 
     await collection.updateOne(
         {name: verifiedUser.name},
         {$addToSet: {
             moves:{
-                dateTime: {
-                    date: dateStr,
-                    time: date.getHours()
-                },
+                date: dateStr,
                 move: {
                     from: move.from,
                     to: move.to
@@ -198,7 +188,7 @@ async function tallyMoves(){ //tally and execute
     const votedUsers = await collection.find({
         moves: {
             $elemMatch: {
-                'dateTime.date': dateStr
+                date: dateStr
             }
         }
     }).toArray()
@@ -282,7 +272,7 @@ async function discordWebhook(name, move){
     else {from = move.from; to = move.to}
 
     const fileName = `${name}_${Date.now()}.png`.split(' ').join('')
-    if(config.production === true && credentials.valid === true){
+    if(config.production === true && credentialsValid === true){
         await browser.goto(`https://${config.domain}/boardView?fen=${chess.fen()}&from=${from}&to=${to}`.split(' ').join('$'))
     }
     else{
@@ -355,9 +345,12 @@ async function scheculeMoves(){
 }
 
 function createHTTPSServer(){
-    if (credentials.valid === true) {
+    if (credentialsValid === true) {
         console.log('Starting HTTPS Server...')
         https.createServer(credentials, app).listen(443)
+    }
+    else{
+        console.log('Error reading SSL keys, HTTPS will be disabled')
     }
 }
 
@@ -427,6 +420,9 @@ app.get('/boardView', (req, res) => {res.sendFile(__dirname + '/html/boardView.h
     await mongoConnect()
     await loadBoard()
     await startBrowser()
+    if (!fs.existsSync('boardCaptures')) {
+        fs.mkdirSync('boardCaptures')
+    }
 
     console.log('Starting HTTP Server...')
     app.listen(80)
