@@ -145,7 +145,7 @@ async function checkAndInsert(verifiedUser, move){
         return 'Inserted New User'
     }
 
-    else if (user.moves.at(-1).dateTime.date === dateStr){return 'Already Moved Today'}
+    else if (user.moves.at(-1).dateTime.date === dateStr && config.production == true){return 'Already Moved Today'}
 
     await collection.updateOne(
         {name: verifiedUser.name},
