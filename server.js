@@ -16,19 +16,21 @@ const app = express()
 app.use(express.json())
 app.use(favicon(__dirname + '/favicon.ico'))
 
-let credentialsValid = true
+var credentials = {
+    valid: true
+}
 try {
     credentials.key = fs.readFileSync(`/etc/letsencrypt/live/${config.domain}/privkey.pem`, 'utf8')
     credentials.cert = fs.readFileSync(`/etc/letsencrypt/live/${config.domain}/cert.pem`, 'utf8')
     credentials.ca = fs.readFileSync(`/etc/letsencrypt/live/${config.domain}/chain.pem`, 'utf8')
 }
 catch (err) {
-    credentialsValid = false
+    credentials.valid = false
 }
 
 // Redirect HTTP to HTTPS if credentials are valid
 app.use(function(request, response, next) {
-    if (credentialsValid && !request.secure) {
+    if (credentials.valid && !request.secure) {
         return response.redirect('https://' + request.headers.host + request.url)
     }
     next()
@@ -271,7 +273,7 @@ async function discordWebhook(name, move){
     else {from = move.from; to = move.to}
 
     const fileName = `${name}_${Date.now()}.png`.split(' ').join('')
-    if(config.production === true && credentialsValid === true){
+    if(config.production === true && credentials.valid === true){
         await browser.goto(`https://${config.domain}/boardView?fen=${chess.fen()}&from=${from}&to=${to}`.split(' ').join('$'))
     }
     else{
@@ -344,7 +346,7 @@ async function scheculeMoves(){
 }
 
 function createHTTPSServer(){
-    if (credentialsValid === true) {
+    if (credentials.valid === true) {
         console.log('Starting HTTPS Server...')
         https.createServer(credentials, app).listen(443)
     }
