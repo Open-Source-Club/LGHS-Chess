@@ -72,7 +72,8 @@ const loadData = () => {
             orientation: turn,
             onDragStart: onDragStart,
             onDrop: onDrop,
-            onSnapEnd: onSnapEnd
+            onSnapEnd: onSnapEnd,
+            pieceTheme: '{piece}.png'
         })
 
         startCountDown()

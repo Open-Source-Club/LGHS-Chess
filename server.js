@@ -39,9 +39,8 @@ let gameStarted = false
 
 app.use(express.static('scrpits'))
 app.use(express.static('node_modules/chess.js'))
-app.use(express.static('dependencies/js'))
-app.use(express.static('dependencies/css'))
-app.use(express.static('dependencies/img/chesspieces/wikipedia'))
+app.use(express.static('node_modules/@chrisoakman/chessboardjs/dist'))
+app.use(express.static('chesspieces'))
 
 let chess = null
 let pendingMove = []
