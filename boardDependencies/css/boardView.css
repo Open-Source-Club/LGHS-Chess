@@ -1,0 +1,68 @@
+.move {
+    /* display: flex;
+    flex-direction: row;
+    justify-content: space-around; */
+    height: 30px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 13px;
+    width: 130px;
+    position: relative;
+}
+
+.move:nth-child(odd) {
+    background-color: #272522;
+}
+
+.move:nth-child(even) {
+    background-color: #2b2926;
+}
+
+#moveListContainer {
+    height: 500px;
+    width: 130px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    background-color: #272522;
+}
+
+#moveListContainer::-webkit-scrollbar {
+    width: 10px;
+}
+
+#moveListContainer::-webkit-scrollbar-thumb {
+    background-color: #151413;
+    border-radius: 10px;
+}
+
+.moveNumber, .move1, .move2 {
+    /* display: flex;
+    flex-direction: column; */
+    position:absolute;
+    width: 25px;
+    top:0px;
+    text-align: left;
+    padding-top: 5px;
+}
+
+.move1, .move2 {
+    color: #b2b2b1;
+    font-weight: 800;
+    flex: 0 0 25px;
+}
+
+.moveNumber {
+    color: #7a7977;
+    font-weight: 600;
+    flex: 0 0 10px;
+    right: 110px;
+    width: 20px;
+    text-align: right;
+}
+
+.move1 {
+    left: 45px;
+}
+
+.move2 {
+    left: 90px;
+}

@@ -9,6 +9,7 @@
 
     <meta name="google-signin-client_id">
     <link rel="stylesheet" href="chessboard-1.0.0.min.css">
+    <link rel="stylesheet" href="boardView.css">
 
     <script src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
     <script src="chessboard-1.0.0.min.js"></script>
@@ -45,7 +46,18 @@
 </head>
 
 <body>
-   <div id="board" style="width: 500px"></div>
+    <table>
+        <tr>
+            <td>
+                <div id="board" style="width: 500px"></div>
+            </td>
+            <td>
+                <div id="moveListContainer">
+                    <div id="moveList"></div>
+                </div>
+            </td>
+        </tr>
+    </table>
 
    <button id="undo">Undo Move</button><br>
    <button id="sendData">Submit Move</button><div id = "response" class="text"></div>

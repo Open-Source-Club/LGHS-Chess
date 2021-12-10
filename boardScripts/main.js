@@ -64,6 +64,46 @@ const loadData = () => {
         const currentDiv = document.getElementById("OAuthButton");
         document.body.insertBefore(newScript, currentDiv);
        
+
+        console.log(response.moves);
+
+        // for(i = 0; i<50 ;i++) {
+        //     response.moves.push("e4");
+        //     response.moves.push("e5");
+        // }
+        
+        if (response.moves != undefined) {
+            let divC, divN, div1, div2;
+            $.each(response.moves, function(i, move){
+                if (i % 2 == 0) {//it is odd
+                    divC = document.createElement("div");
+                    divC.classList.add("move");
+                    divN = document.createElement("div");
+                    divN.classList.add("moveNumber");
+                    div1 = document.createElement("div");
+                    div1.classList.add("move1");
+                    div2 = document.createElement("div");
+                    div2.classList.add("move2");
+                    $(divC).append(divN);
+                    $(divC).append(div1);
+                    $(divC).append(div2);
+                    divN.innerText = Math.floor(i/2) + 1 + ".";
+                    div1.innerText = move;
+                } else {
+                    div2.innerText = move;
+                    $("#moveList").append(divC);
+                }
+            });
+            
+            if(response.moves.length % 2 == 1) {
+                $("#moveList").append(divC);
+            }
+    
+            if($("#moveListContainer")[0].scrollHeight > $("#moveListContainer")[0].clientHeight) {
+                $("#moveListContainer").css("width","140px");
+            }
+        }
+
         chess = new Chess(response.fen)
         turn = chess.turn() === 'w' ? 'white' : 'black'
         board = Chessboard('board', {

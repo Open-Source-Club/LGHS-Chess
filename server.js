@@ -9,6 +9,8 @@ const puppeteer = require('puppeteer');
 const fs = require('fs')
 const https = require('https')
 
+let storedMoves;
+
 try{var config = require('./myConfig.json')}
 catch(error){var config = require('./config.json')}
 
@@ -89,7 +91,11 @@ async function startBrowser(){
 
 async function loadBoard(){
     const movesResult = await movesDB.find().toArray()
-    if (movesResult.length === 0){chess = new Chess(); console.log('Loaded New Board'); return}
+    if (movesResult.length === 0){
+        chess = new Chess();
+        console.log('Loaded New Board');
+        return
+    }
 
     chess = new Chess(movesResult.at(-1).fen)
     console.log('Loaded Board: ' + chess.fen())
@@ -169,6 +175,15 @@ async function checkAndInsert(verifiedUser, move){
     return 'Inserted Move'
 }
 
+async function getMoves() {
+    let moves = await movesDB.find().toArray();
+    moves = moves.map(function(e) {
+        return e.move.san;
+    });
+
+    return moves;
+}
+
 async function verifyOAuth(idToken) {
     const ticket = await oAuthClient.verifyIdToken({
         idToken: idToken,
@@ -188,7 +203,7 @@ function verifyRequest(form){
     catch (error) {return 'Invalid Request'}
 }
 
-async function tallyMoves(){ //tally and execute
+async function tallyMoves(){
     const date = new Date(new Date().toLocaleString('en-US', {timeZone : 'America/Los_Angeles'}))
     const dateStr = `${date.getMonth()}-${date.getDate()}-${date.getFullYear()}`
 
@@ -247,6 +262,7 @@ async function executeMove(){
 
     pendingMove = []
     console.log(`Executed Move: ${move}`)
+    storedMoves.push(moveResult.san);
 }
 
 async function clearBoardCaptures(){
@@ -420,8 +436,18 @@ app.post('/', async (req, res) => {
     res.send(result)
 })
 
-app.get('/fetchData', (req, res) => {res.json({fen: chess.fen(), OAuthId: config.OAuthId, schoolW: config.schoolW, schoolB: config.schoolB, gameStartDate: config.gameStartDate})})
-app.get('/boardView', (req, res) => {res.sendFile(__dirname + '/boardView.html')})
+app.get('/fetchData', async (req, res) => {
+    res.json({
+        fen: chess.fen(),
+        OAuthId: config.OAuthId,
+        schoolW: config.schoolW,
+        schoolB: config.schoolB, 
+        gameStartDate: config.gameStartDate, 
+        moves: storedMoves
+    });
+})
+app.get('/boardView', (req, res) => {res.sendFile(__dirname + '/boardView.html')});
+app.post('/executeMove', (req, res) => {executeMove(); res.send("ok")});//DELETE THIS LATER
 
 ;(async () => {
     await mongoConnect()
@@ -442,4 +468,7 @@ app.get('/boardView', (req, res) => {res.sendFile(__dirname + '/boardView.html')
         gameStarted = true
         console.log("Game Started")
     }
+
+    storedMoves = await getMoves();
+    console.log("Queried Server for Prior Moves");
 })()
