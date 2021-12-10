@@ -41,7 +41,8 @@ app.use(function(request, response, next) {
 const oAuthClient = new OAuth2Client(config.OAuthId)
 let gameStarted = false
 
-app.use(express.static('scrpits'))
+app.use(express.static('scripts'))
+app.use(express.static('boardDependencies/css'))
 app.use(express.static('node_modules/chess.js'))
 app.use(express.static('node_modules/@chrisoakman/chessboardjs/dist'))
 app.use(express.static('chesspieces'))
