@@ -112,7 +112,8 @@ const loadData = () => {
             orientation: turn,
             onDragStart: onDragStart,
             onDrop: onDrop,
-            onSnapEnd: onSnapEnd
+            onSnapEnd: onSnapEnd,
+            pieceTheme: '{piece}.png'
         })
 
         startCountDown()
@@ -129,7 +130,7 @@ const startCountDown = () => {
     ]
 
     let countDownTime;
-    for(let t = 0; t < timesMs.length; t++){
+    for(var t = 0; t < timesMs.length; t++){
         if (timesMs[t] - dateNow.getTime() > 0){
             countDownTime = timesMs[t]
             break
@@ -137,6 +138,9 @@ const startCountDown = () => {
     }
     if (countDownTime === undefined){
         countDownTime = new Date(dateNow.getFullYear(), dateNow.getMonth(), dateNow.getDate() + 1, schoolB.executeTime[0], schoolB.executeTime[1], 0, 0).getTime()
+        votingClosed = true
+    }
+    else if (t === 0){
         votingClosed = true
     }
 

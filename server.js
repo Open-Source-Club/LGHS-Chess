@@ -18,14 +18,15 @@ const app = express()
 app.use(express.json())
 app.use(favicon(__dirname + '/favicon.ico'))
 
-let credentials = {valid: true}
+var credentials = {
+    valid: true
+}
 try {
-    credentials.key = fs.readFileSync(config.SSLKeyPath + 'privkey.pem', 'utf8')
-    credentials.cert = fs.readFileSync(config.SSLKeyPath + 'cert.pem', 'utf8')
-    credentials.ca = fs.readFileSync(config.SSLKeyPath + 'chain.pem', 'utf8')
+    credentials.key = fs.readFileSync(`/etc/letsencrypt/live/${config.domain}/privkey.pem`, 'utf8')
+    credentials.cert = fs.readFileSync(`/etc/letsencrypt/live/${config.domain}/cert.pem`, 'utf8')
+    credentials.ca = fs.readFileSync(`/etc/letsencrypt/live/${config.domain}/chain.pem`, 'utf8')
 }
 catch (err) {
-    console.log('Error reading SSL keys, HTTPS will be disabled')
     credentials.valid = false
 }
 
@@ -34,18 +35,16 @@ app.use(function(request, response, next) {
     if (credentials.valid && !request.secure) {
         return response.redirect('https://' + request.headers.host + request.url)
     }
-
     next()
 })
 
 const oAuthClient = new OAuth2Client(config.OAuthId)
 let gameStarted = false
 
-app.use(express.static('boardScripts'))
-app.use(express.static('boardCaptures'))
-app.use(express.static('boardDependencies/js'))
-app.use(express.static('boardDependencies/css'))
-app.use(express.static('boardDependencies/img/chesspieces/wikipedia'))
+app.use(express.static('scrpits'))
+app.use(express.static('node_modules/chess.js'))
+app.use(express.static('node_modules/@chrisoakman/chessboardjs/dist'))
+app.use(express.static('chesspieces'))
 
 let chess = null
 let pendingMove = []
@@ -129,8 +128,6 @@ async function checkAndInsert(verifiedUser, move){
     
     const date = new Date(new Date().toLocaleString('en-US', {timeZone : 'America/Los_Angeles'}))
     const dateStr = `${date.getMonth()}-${date.getDate()}-${date.getFullYear()}`
-    const hours = date.getHours()
-
     const user = await collection.findOne({email: verifiedUser.email})
 
     if (user === null){
@@ -139,10 +136,7 @@ async function checkAndInsert(verifiedUser, move){
             name: verifiedUser.name,
             userId: verifiedUser.userId,
             moves: [{
-                dateTime: {
-                    date: dateStr,
-                    time: hours
-                },
+                date: dateStr,
                 move: {
                     from: move.from,
                     to: move.to
@@ -153,16 +147,13 @@ async function checkAndInsert(verifiedUser, move){
         return 'Inserted New User'
     }
 
-    else if (user.moves.at(-1).dateTime.date === dateStr){return 'Already Moved Today'}
+    else if (user.moves.at(-1).date === dateStr && config.production == true){return 'Already Moved Today'}
 
     await collection.updateOne(
         {name: verifiedUser.name},
         {$addToSet: {
             moves:{
-                dateTime: {
-                    date: dateStr,
-                    time: date.getHours()
-                },
+                date: dateStr,
                 move: {
                     from: move.from,
                     to: move.to
@@ -213,7 +204,7 @@ async function tallyMoves(){
     const votedUsers = await collection.find({
         moves: {
             $elemMatch: {
-                'dateTime.date': dateStr
+                date: dateStr
             }
         }
     }).toArray()
@@ -375,6 +366,9 @@ function createHTTPSServer(){
         console.log('Starting HTTPS Server...')
         https.createServer(credentials, app).listen(443)
     }
+    else{
+        console.log('Error reading SSL keys, HTTPS will be disabled')
+    }
 }
 
 function gameStartCheck(){
@@ -415,8 +409,8 @@ function enableTestMove(){
 }
 
 app.get('/', (req, res) => {
-    if (gameStarted === true){res.sendFile(__dirname + '/board.html')}
-    else {res.sendFile(__dirname + '/waitPage.html')}
+    if (gameStarted === true){res.sendFile(__dirname + '/html/board.html')}
+    else {res.sendFile(__dirname + '/html/waitPage.html')}
 })
 
 app.post('/', async (req, res) => {
@@ -447,12 +441,14 @@ app.get('/fetchData', async (req, res) => {
     });
 })
 app.get('/boardView', (req, res) => {res.sendFile(__dirname + '/boardView.html')});
-app.post('/executeMove', (req, res) => {executeMove(); res.send("ok")});//DELETE THIS LATER
 
 ;(async () => {
     await mongoConnect()
     await loadBoard()
     await startBrowser()
+    if (!fs.existsSync('boardCaptures')) {
+        fs.mkdirSync('boardCaptures')
+    }
 
     console.log('Starting HTTP Server...')
     app.listen(80)
