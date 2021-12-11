@@ -441,7 +441,7 @@ app.get('/fetchData', async (req, res) => {
         moves: storedMoves
     });
 })
-app.get('/boardView', (req, res) => {res.sendFile(__dirname + '/boardView.html')});
+app.get('/boardView', (req, res) => {res.sendFile(__dirname + '/html/boardView.html')});
 
 ;(async () => {
     await mongoConnect()
