@@ -467,5 +467,4 @@ app.get('/boardView', (req, res) => {res.sendFile(__dirname + '/boardView.html')
     }
 
     storedMoves = await getMoves();
-    console.log("Queried Server for Prior Moves");
 })()
