@@ -326,9 +326,36 @@ async function discordWebhook(name, move){
     })
 }
 
+async function discordWebhookPing(teamToPing){
+    school = teamToPing == "w" ? config.schoolW : config.schoolB;
+    time = teamToPing == "w" ? config.schoolW.moveTime : config.schoolB.tallyTime;
+
+    date = new Date();
+    date.setHours(time[0], time[1]);
+    timeString = date.toLocaleTimeString()
+    timeString = timeString.split(":")[0] + ":" + timeString.split(":")[1] + " " + timeString.split(" ")[1];//don't worry about this
+    const requestData = {
+        method: "POST",
+        url: config.userWebhookUrl,
+        headers: {
+            "Content-Type": "multipart/form-data"
+        },
+        formData : {
+            payload_json: JSON.stringify({
+                content: `<@&${school.roleId}> It's your turn! You have until ${timeString}`
+            })
+        }
+    }
+
+    request(requestData, function (err, res) {
+        if (err) console.log(err)
+        console.log(`Sent User Channel Webhook: ${res.statusCode}`)
+    })
+}
+
 async function scheculeMoves(){
     const whiteMove = new CronJob(`0 ${config.schoolW.moveTime[1]} ${config.schoolW.moveTime[0]} * * *`, async function() {
-        await tallyMoves(); await executeMove()}, 
+        await tallyMoves(); await executeMove(); await discordWebhookPing("b")}, 
         null, true, 'America/Los_Angeles')
 
     const blackTally = new CronJob(`0 ${config.schoolB.tallyTime[1]} ${config.schoolB.tallyTime[0]} * * *`, async function() {
@@ -336,7 +363,7 @@ async function scheculeMoves(){
         null, true, 'America/Los_Angeles')
 
     const blackExecute = new CronJob(`0 ${config.schoolB.executeTime[1]} ${config.schoolB.executeTime[0]} * * *`, async function() {
-        await executeMove()},
+        await executeMove(); await discordWebhookPing("w")},
         null, true, 'America/Los_Angeles')
 
     whiteMove.start()
