@@ -155,8 +155,8 @@ async function moveWebhook(name, move){
     }
 
     request(requestData, function (err, res) {
-        if (err) console.log(err)
-        console.log(`Sent User Move Webhook: ${res.statusCode}`)
+        if (err) console.log("User Move Webhook Error")
+        else console.log(`Sent User Move Webhook: ${res.statusCode}`)
     })
 
     if (color2 === null) return
@@ -173,8 +173,8 @@ async function moveWebhook(name, move){
     })
 
     request(requestData, function (err, res) {
-        if(err) console.log(err)
-        console.log(`Sent School Move Webhook: ${res.statusCode}`)
+        if (err) console.log("School Move Webhook Error")
+        else console.log(`Sent School Move Webhook: ${res.statusCode}`)
     })
 }
 
@@ -190,8 +190,8 @@ async function turnWebhook(){
     }
 
     request(requestData, function (err, res) {
-        if(err) console.log(err)
-        console.log(`Sent Turn Notification Webhook: ${res.statusCode}`)
+        if (err) console.log("Turn Notification Webhook Error")
+        else console.log(`Sent Turn Notification Webhook: ${res.statusCode}`)
     })
 }
 
