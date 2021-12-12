@@ -103,6 +103,98 @@ function verifyMove(move){
     return 'Invalid'
 }
 
+async function moveWebhook(name, move){
+    const date = new Date()
+
+    const turn = chess.turn()
+    const color1 = turn === 'w' ? schoolWColors[0] : schoolBColors[0]
+    let color2 = null
+    
+    let from;
+    let to;
+    if (name === null){
+        from = move[0]
+        to = move[1]
+        if (turn === 'w'){
+            name = config.schoolW.name
+            color2 = schoolWColors[1]
+        }
+        else {
+            name = config.schoolB.name
+            color2 = schoolBColors[1]
+        }
+    }
+    else {from = move.from; to = move.to}
+
+    const fileName = `${name}_${Date.now()}.png`.split(' ').join('')
+    if(config.production === true && credentials.valid === true){
+        await browser.goto(`https://${config.domain}/boardView?fen=${chess.fen()}&from=${from}&to=${to}`.split(' ').join('$'))
+    }
+    else{
+        await browser.goto(`http://localhost/boardView?fen=${chess.fen()}&from=${from}&to=${to}`.split(' ').join('$'))
+    }
+    await browser.screenshot({path: `boardCaptures/${fileName}`});
+
+    const requestData = {
+        method: 'POST',
+        url: config.userWebhookUrl,
+        headers: {'Content-Type': 'multipart/form-data'},
+        formData : {
+            file1 : fs.createReadStream(`boardCaptures/${fileName}`),
+            payload_json: JSON.stringify({
+                embeds: [{
+                    title: `${name}: ${pieceMap[chess.get(from).type]} ➞ ${to.toUpperCase()}`,
+                    color: color2 === null ? color1 : color2,
+                    image: {
+                        url: `attachment://${fileName}`
+                    },
+                    timestamp: date
+                }]
+            })
+        }
+    }
+
+    request(requestData, function (err, res) {
+        if (err) console.log("User Move Webhook Error")
+        else console.log(`Sent User Move Webhook: ${res.statusCode}`)
+    })
+
+    if (color2 === null) return
+    requestData.url = config.schoolWebhookUrl
+    requestData.formData.payload_json = JSON.stringify({
+        embeds: [{
+            title: `${name}: ${pieceMap[chess.get(from).type]} ➞ ${to.toUpperCase()}`,
+            color: color1,
+            image: {
+                url: `attachment://${fileName}`
+            },
+            timestamp: date
+        }]
+    })
+
+    request(requestData, function (err, res) {
+        if (err) console.log("School Move Webhook Error")
+        else console.log(`Sent School Move Webhook: ${res.statusCode}`)
+    })
+}
+
+async function turnWebhook(){
+    const roldID = chess.turn() === 'w' ? config.schoolW.roleID : config.schoolB.roleID
+    const requestData = {
+        method: 'POST',
+        url: config.turnWebhookUrl,
+        headers: {'Content-Type': 'application/json'},
+        formData : {
+            content: `<@&${roldID}> Your Move`
+        }
+    }
+
+    request(requestData, function (err, res) {
+        if (err) console.log("Turn Notification Webhook Error")
+        else console.log(`Sent Turn Notification Webhook: ${res.statusCode}`)
+    })
+}
+
 async function checkAndInsert(verifiedUser, move){
     if (pendingMove.length != 0){return 'Already Pending Move'}
     if (verifiedUser === undefined){return 'Invalid OAuth Sign In'}
@@ -137,7 +229,7 @@ async function checkAndInsert(verifiedUser, move){
                 } 
             }]
         })
-        discordWebhook(verifiedUser.name, move)
+        moveWebhook(verifiedUser.name, move)
         return 'Inserted New User'
     }
 
@@ -156,7 +248,7 @@ async function checkAndInsert(verifiedUser, move){
         } 
     })
 
-    discordWebhook(verifiedUser.name, move)
+    moveWebhook(verifiedUser.name, move)
     return 'Inserted Move'
 }
 
@@ -230,7 +322,8 @@ async function executeMove(){
         console.log('No Pending Move, Executing Random Move')
     }
 
-    await discordWebhook(null, move)
+    await moveWebhook(null, move)
+    turnWebhook()
     clearBoardCaptures()
 
     const moveResult = chess.move({from: move[0], to: move[1], promotion: 'q'})
@@ -246,83 +339,6 @@ async function clearBoardCaptures(){
             if (file.split('.')[1] != 'png') continue
             fs.unlink(`boardCaptures/${file}`, err => {if (err) throw err})
         }
-    })
-}
-
-async function discordWebhook(name, move){
-    const date = new Date()
-
-    const turn = chess.turn()
-    const color1 = turn === 'w' ? schoolWColors[0] : schoolBColors[0]
-    let color2 = null
-    
-    let from;
-    let to;
-    if (name === null){
-        from = move[0]
-        to = move[1]
-        if (turn === 'w'){
-            name = config.schoolW.name
-            color2 = schoolWColors[1]
-        }
-        else {
-            name = config.schoolB.name
-            color2 = schoolBColors[1]
-        }
-    }
-    else {from = move.from; to = move.to}
-
-    const fileName = `${name}_${Date.now()}.png`.split(' ').join('')
-    if(config.production === true && credentials.valid === true){
-        await browser.goto(`https://${config.domain}/boardView?fen=${chess.fen()}&from=${from}&to=${to}`.split(' ').join('$'))
-    }
-    else{
-        await browser.goto(`http://localhost/boardView?fen=${chess.fen()}&from=${from}&to=${to}`.split(' ').join('$'))
-    }
-    await browser.screenshot({path: `boardCaptures/${fileName}`});
-
-    const requestData = {
-        method: "POST",
-        url: config.userWebhookUrl,
-        headers: {
-            "Content-Type": "multipart/form-data"
-        },
-        formData : {
-            file1 : fs.createReadStream(`boardCaptures/${fileName}`),
-            payload_json: JSON.stringify({
-                embeds: [{
-                    title: `${name}: ${pieceMap[chess.get(from).type]} ➞ ${to.toUpperCase()}`,
-                    color: color2 === null ? color1 : color2,
-                    image: {
-                        url: `attachment://${fileName}`
-                    },
-                    timestamp: date
-                }]
-            })
-        }
-    }
-
-    request(requestData, function (err, res) {
-        if (err) console.log(err)
-        console.log(`Sent User Channel Webhook: ${res.statusCode}`)
-    })
-
-    if (color2 === null) return
-    requestData.url = config.schoolWebhookUrl
-    requestData.formData.payload_json = JSON.stringify({
-        embeds: [{
-            title: `${name}: ${pieceMap[chess.get(from).type]} ➞ ${to.toUpperCase()}`,
-            color: color1,
-            image: {
-                url: `attachment://${fileName}`
-            },
-            timestamp: date
-        }]
-    })
-
-    request(requestData, function (err, res) {
-        if(err) console.log(err)
-        console.log(`Sent School Channel Webhook: ${res.statusCode}`)
     })
 }
 
@@ -364,13 +380,13 @@ function gameStartCheck(){
     )
 
     if (startDateMs - dateNow.getTime() > 0){
-        console.log("Waiting For Game To Start")
+        console.log('Waiting For Game To Start')
         
         const cronStr = `0 ${config.gameStartDate[3].toString()} ${config.gameStartDate[2].toString()} ${config.gameStartDate[1].toString()} ${config.gameStartDate[0].toString()} *`
         const startGame = new CronJob(cronStr, function() {
             gameStarted = true
             scheculeMoves()
-            console.log("Game Started")
+            console.log('Game Started')
             
             startGame.stop()
         }, null, true, 'America/Los_Angeles')
@@ -381,7 +397,7 @@ function gameStartCheck(){
 
     gameStarted = true
     scheculeMoves()
-    console.log("Game Started")
+    console.log('Game Started')
 }
 
 function enableTestMove(){
@@ -437,6 +453,6 @@ app.get('/boardView', (req, res) => {res.sendFile(__dirname + '/html/boardView.h
         console.log('Production: False')
         enableTestMove()
         gameStarted = true
-        console.log("Game Started")
+        console.log('Game Started')
     }
 })()
