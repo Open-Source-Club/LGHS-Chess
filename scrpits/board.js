@@ -35,6 +35,8 @@ function onSnapEnd() {
 }
 
 function updateStatus() {
+    let gameStatus;
+    let gameAlert = null;
     if (votingClosed === true){$('#status').html('Voting Closed'); return}
     school = chess.turn() === 'w' ? schoolW.nameAbrv: schoolB.nameAbrv
     gameStatus = `${school}'s Move`
@@ -43,6 +45,7 @@ function updateStatus() {
         school = chess.turn() === 'w' ? schoolB.nameAbrv: schoolW.nameAbrv
         gameStatus = 'Game Over';
         gameAlert = `${school} WINS`
+        board.flip()
     }
     else if (chess.in_draw()) {
         gameStatus = 'Game Over'
@@ -53,7 +56,10 @@ function updateStatus() {
     }
 
     $('#status').html(gameStatus)
-    if (gameAlert != undefined){$('#alert').html(gameAlert).css({"color": "red"})}
+    if (gameAlert != null){
+        $('#alert').html(gameAlert).css({"color": "red"})
+        return gameStatus
+    }
 }
 
 const loadData = () => {
@@ -84,8 +90,8 @@ const loadData = () => {
             pieceTheme: '{piece}.png'
         })
 
+        if (updateStatus() === 'Game Over') return
         startCountDown()
-        updateStatus()
     };
 }
 
