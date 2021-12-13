@@ -136,8 +136,10 @@ const checkMobil = () => {
 const editPage = (school1, school2) => {
     let timeStr1 = timeToStr(school2.executeTime) + " - " + timeToStr(school1.moveTime)
     let timeStr2 = timeToStr(school1.moveTime) + " - " + timeToStr(school2.tallyTime)
+
     document.getElementById("votingPeriod1").innerHTML = school1.nameAbrv + document.getElementById("votingPeriod1").innerHTML + timeStr1;
     document.getElementById("votingPeriod2").innerHTML = school2.nameAbrv + document.getElementById("votingPeriod2").innerHTML + timeStr2;
+    
 	let p2str = document.getElementById("p2").innerHTML
 	while (p2str.indexOf("[school1]") != -1) {
 		p2str = p2str.substring(0, p2str.indexOf("[school1]")) + school1.nameAbrv + p2str.substring(p2str.indexOf("[school1]") + 9)
@@ -148,7 +150,7 @@ const editPage = (school1, school2) => {
 	document.getElementById("p2").innerHTML = p2str
 }
 
-//gets a time [hours, min] and converts to non-military time str
+//gets a time [hours, min] and converts to 12 hour time str
 const timeToStr = (time) => {
     return time[0] > 12 ? (time[0]-12) + ":" + time[1] + " pm" : time[0] + ":" + time[1] + " am"
 }
@@ -167,7 +169,8 @@ const postData = () => {
     if (domain === undefined){return "Not Signed In"}
     else if (!(domain === schoolW.domain || domain === schoolB.domain)){return 'Not Student Email'}
 
-    if (chess.turn() === 'b' && domain != schoolW.domain){return `Not ${schoolW.nameAbrv} Account`} // swapped w and b because this could only run after the user has moved thus changing the move to the opposite color
+    // swapped w and b because this could only run after the user has moved thus changing the move to the opposite color
+    if (chess.turn() === 'b' && domain != schoolW.domain){return `Not ${schoolW.nameAbrv} Account`}
     else if (chess.turn() === 'w' && domain != schoolB.domain){return `Not ${schoolB.nameAbrv} Account`}
 
     let xhr = new XMLHttpRequest();

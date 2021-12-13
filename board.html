@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html>
-
 <head>
     <title>LGHS Chess</title>
     <meta charset="UTF-8">
@@ -43,6 +42,10 @@
             width: 65%;
             float: right;
         }
+        
+        .noMargin{
+            margin: 0;
+        }
 
         #undo{margin: 6px 0px; clear: left;}
         #sendData{margin: 0px 0px 3px 0px; clear: left;}
@@ -54,15 +57,15 @@
 <body>
    <div id="board" style="width: 500px; float: left;"></div>
 
-    <h1 class="explanation">How LGHS Chess Works</h1>
+    <h1 class="explanation noMargin">How LGHS Chess Works</h1>
 
     <p class="explanation">
     LGHS Chess is played between two schools. Anyone at the two participating schools can play.
     You can submit a move at any point during your school’s turn in the game.
     </p>
 
-    <p id="votingPeriod1" class="explanation">voting period: </p>
-    <p id="votingPeriod2" class="explanation">voting period: </p>
+    <p id="votingPeriod1" class="explanation noMargin"> voting period: </p>
+    <p id="votingPeriod2" class="explanation noMargin"> voting period: </p>
     
     <p id="p2" class="explanation">
     Once time is up, votes are tallied up and the move with the most votes is made on the board. 
@@ -71,14 +74,14 @@
     decision-making time.
     </p>
 
-    <h1 class="explanation">How To Play LGHS Chess</h1>
+    <h1 class="explanation noMargin">How To Play LGHS Chess</h1>
     
     <p class="explanation">
     To play, you must sign-in to your school-provided Google account. At the bottom of the screen, 
     the display will show which school is to move. If it is your school’s move, click and drag your school’s 
-    chess piece to a valid square. You may undo your move anytime PRIOR TO pressing the “Submit” button.
-    To undo your move, press the “UNDO” button directly below the chess board. When you are ready to finalize 
-    your move, press the “SUBMIT” button below the Google sign-in. You may only submit one move per turn cycle.
+    chess piece to a valid square. You may undo your move anytime prior to pressing the SUBMIT button.
+    To undo your move, press the UNDO button. When you are ready to finalize 
+    your move, press the SUBMIT button. You may only submit one move per turn cycle.
     </p>
 
    <button id="undo">Undo Move</button><br>
