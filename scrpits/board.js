@@ -37,15 +37,23 @@ function onSnapEnd() {
 function updateStatus() {
     if (votingClosed === true){$('#status').html('Voting Closed'); return}
     school = chess.turn() === 'w' ? schoolW.nameAbrv: schoolB.nameAbrv
+    gameStatus = `${school}'s Move`
 
-    if (chess.in_checkmate()) {status = `Game Over, ${school} Is In Checkmate.`}
-    else if (chess.in_draw()) {status = 'Game Over, Draw'}
-    else {
-        status = school + "'s Move"
-        if (chess.in_check()) {status += ', ' + school + ' Is In Check'}
+    if (chess.in_checkmate()) {
+        school = chess.turn() === 'w' ? schoolB.nameAbrv: schoolW.nameAbrv
+        gameStatus = 'Game Over';
+        gameAlert = `${school} WINS`
+    }
+    else if (chess.in_draw()) {
+        gameStatus = 'Game Over'
+        gameAlert = 'DRAW'
+    }
+    else if (chess.in_check()){
+        gameAlert = 'IN CHECK'
     }
 
-    $('#status').html(status)
+    $('#status').html(gameStatus)
+    if (gameAlert != undefined){$('#alert').html(gameAlert).css({"color": "red"})}
 }
 
 const loadData = () => {
@@ -146,7 +154,8 @@ const postData = () => {
     if (domain === undefined){return "Not Signed In"}
     else if (!(domain === schoolW.domain || domain === schoolB.domain)){return 'Not Student Email'}
 
-    if (chess.turn() === 'b' && domain != schoolW.domain){return `Not ${schoolW.nameAbrv} Account`} // swapped w and b because this could only run after the user has moved thus changing the move to the opposite color
+    //swapped w and b because this could only run after the user has moved thus changing the move to the opposite color
+    if (chess.turn() === 'b' && domain != schoolW.domain){return `Not ${schoolW.nameAbrv} Account`}
     else if (chess.turn() === 'w' && domain != schoolB.domain){return `Not ${schoolB.nameAbrv} Account`}
 
     let xhr = new XMLHttpRequest();
