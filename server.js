@@ -38,6 +38,7 @@ app.use(function(request, response, next) {
 
 const oAuthClient = new OAuth2Client(config.OAuthId)
 let gameStarted = false
+let gameOver;
 
 app.use(express.static('scrpits'))
 app.use(express.static('node_modules/chess.js'))
@@ -91,6 +92,7 @@ async function loadBoard(){
     if (movesResult.length === 0){chess = new Chess(); console.log('Loaded New Board'); return}
 
     chess = new Chess(movesResult.at(-1).fen)
+    gameOver = chess.game_over()
     console.log('Loaded Board: ' + chess.fen())
 }
 
@@ -271,7 +273,7 @@ function verifyRequest(form){
     catch (error) {return 'Invalid Request'}
 }
 
-async function tallyMoves(){ //tally and execute
+async function tallyMoves(){
     const date = new Date(new Date().toLocaleString('en-US', {timeZone : 'America/Los_Angeles'}))
     const dateStr = `${date.getMonth()}-${date.getDate()}-${date.getFullYear()}`
 
@@ -311,6 +313,34 @@ async function tallyMoves(){ //tally and execute
     console.log(`Tally Result: ${finalMove}`)
 }
 
+async function startCron(){
+    if (gameOver) return
+    whiteMoveCron = new CronJob(`0 ${config.schoolW.moveTime[1]} ${config.schoolW.moveTime[0]} * * *`, async function() {
+        await tallyMoves(); await executeMove()}, 
+        null, true, 'America/Los_Angeles')
+
+    blackTallyCron = new CronJob(`0 ${config.schoolB.tallyTime[1]} ${config.schoolB.tallyTime[0]} * * *`, async function() {
+        await tallyMoves()},
+        null, true, 'America/Los_Angeles')
+
+    blackExecuteCron = new CronJob(`0 ${config.schoolB.executeTime[1]} ${config.schoolB.executeTime[0]} * * *`, async function() {
+        await executeMove()},
+        null, true, 'America/Los_Angeles')
+
+    whiteMoveCron.start()
+    blackTallyCron.start()
+    blackExecuteCron.start()
+    console.log('Scheduled Cron Jobs')
+}
+
+async function stopCron(){
+    if (config.production === false) return
+    whiteMoveCron.stop()
+    blackTallyCron.stop()
+    blackExecuteCron.stop()
+    console.log('Stopped Cron Jobs')
+}
+
 async function executeMove(){
     if (pendingMove.length != 0){
         move = pendingMove[0].split(',')
@@ -331,6 +361,12 @@ async function executeMove(){
 
     pendingMove = []
     console.log(`Executed Move: ${move}`)
+
+    gameOver = chess.game_over()
+    if (gameOver){
+        console.log('Game Over')
+        stopCron()
+    }
 }
 
 async function clearBoardCaptures(){
@@ -340,25 +376,6 @@ async function clearBoardCaptures(){
             fs.unlink(`boardCaptures/${file}`, err => {if (err) throw err})
         }
     })
-}
-
-async function scheculeMoves(){
-    const whiteMove = new CronJob(`0 ${config.schoolW.moveTime[1]} ${config.schoolW.moveTime[0]} * * *`, async function() {
-        await tallyMoves(); await executeMove()}, 
-        null, true, 'America/Los_Angeles')
-
-    const blackTally = new CronJob(`0 ${config.schoolB.tallyTime[1]} ${config.schoolB.tallyTime[0]} * * *`, async function() {
-        await tallyMoves()},
-        null, true, 'America/Los_Angeles')
-
-    const blackExecute = new CronJob(`0 ${config.schoolB.executeTime[1]} ${config.schoolB.executeTime[0]} * * *`, async function() {
-        await executeMove()},
-        null, true, 'America/Los_Angeles')
-
-    whiteMove.start()
-    blackTally.start()
-    blackExecute.start()
-    console.log('Scheduled Moves')
 }
 
 function createHTTPSServer(){
@@ -372,6 +389,7 @@ function createHTTPSServer(){
 }
 
 function gameStartCheck(){
+    if (gameOver) {console.log('Game Over'); return}
     const dateNow = new Date(new Date().toLocaleString('en-US', {timeZone : 'America/Los_Angeles'}))
     const startDateMs = new Date(
         new Date(
@@ -385,7 +403,7 @@ function gameStartCheck(){
         const cronStr = `0 ${config.gameStartDate[3].toString()} ${config.gameStartDate[2].toString()} ${config.gameStartDate[1].toString()} ${config.gameStartDate[0].toString()} *`
         const startGame = new CronJob(cronStr, function() {
             gameStarted = true
-            scheculeMoves()
+            startCron()
             console.log('Game Started')
             
             startGame.stop()
@@ -396,12 +414,16 @@ function gameStartCheck(){
     }
 
     gameStarted = true
-    scheculeMoves()
+    startCron()
     console.log('Game Started')
 }
 
 function enableTestMove(){
     app.post('/testMove', async (req, res) => {
+        if (gameOver){
+            res.send('Game Is Over')
+            return
+        }
         await tallyMoves()
         await executeMove()
         res.send('Tallied and Executed')
@@ -414,7 +436,11 @@ app.get('/', (req, res) => {
 })
 
 app.post('/', async (req, res) => {
-    if (verifyRequest(req.body) != 'Valid Request'){
+    if (gameOver){
+        res.send('Game Is Over')
+        return
+    }
+    else if (verifyRequest(req.body) != 'Valid Request'){
         console.log('Invalid Request')
         res.send('Invalid Request')
         return 'Invalid Request'
@@ -453,6 +479,6 @@ app.get('/boardView', (req, res) => {res.sendFile(__dirname + '/html/boardView.h
         console.log('Production: False')
         enableTestMove()
         gameStarted = true
-        console.log('Game Started')
+        gameOver ? console.log('Game Over') : console.log('Game Started')
     }
 })()
