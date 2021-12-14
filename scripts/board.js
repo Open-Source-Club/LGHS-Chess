@@ -169,6 +169,7 @@ const startCountDown = () => {
 const checkMobil = () => {
     if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)){
         $('#board').css({"width": screen.width - 14})
+        $('#moveListContainer').css("height", $('#board').css("width"));
     }
 }
 
