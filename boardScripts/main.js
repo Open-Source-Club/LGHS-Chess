@@ -64,7 +64,7 @@ const loadData = () => {
         const newScript = document.createElement("script");
         newScript.src = "https://apis.google.com/js/platform.js"
         const currentDiv = document.getElementById("OAuthButton");
-        document.body.insertBefore(newScript, currentDiv);
+        document.getElementById("boardAndButtons").insertBefore(newScript, currentDiv);
        
         chess = new Chess(response.fen)
         turn = chess.turn() === 'w' ? 'white' : 'black'
@@ -130,6 +130,7 @@ const startCountDown = () => {
 const checkMobil = () => {
     if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)){
         $('#board').css({"width": screen.width - 14})
+        $('.explanation').css({"float":"left", "clear":"left", "width":"100%"})
     }
 }
 

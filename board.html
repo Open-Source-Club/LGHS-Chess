@@ -27,7 +27,6 @@
             font-size: 20px;
             font-family: 'Arial Black';
             cursor: pointer;
-            clear: left;
         }
 
         .text{
@@ -44,15 +43,25 @@
             float: right;
         }
 
-        #undo{margin: 6px 0px; clear: left;}
-        #sendData{margin: 0px 0px 3px 0px; clear: left;}
-        #OAuthButton{margin: 3px 0px 0px 0px; clear: left;}
-        #status{margin: 4px 0px 0px 0px; clear: left;}
+        #undo{margin: 6px 0px; }
+        #sendData{margin: 0px 0px 3px 0px;}
+        #OAuthButton{margin: 3px 0px 0px 0px; width:160px;}
+        #status{margin: 4px 0px 0px 0px; width:160px;}
+        #countdown{width:160px;}
     </style>
 </head>
 
 <body>
-   <div id="board" style="width: 500px; float: left;"></div>
+    <div id="boardAndButtons" style="float: left;">
+        <div id="board" style="width: 500px;"></div>
+
+        <button id="undo">Undo Move</button><br>
+        <button id="sendData">Submit Move</button><div id="response" class="text"></div>
+        <div id="OAuthButton" class="g-signin2" data-width="160" data-height="45" data-theme="dark" data-onsuccess="onSignIn"></div>
+
+        <div id="status" class="text">Status</div>
+        <div id="countdown" class="text"></div>
+    </div>
 
     <h1 class="explanation">How LGHS Chess Works</h1>
 
@@ -61,8 +70,8 @@
     You can submit a move at any point during your school’s turn in the game.
     </p>
 
-    <p id="votingPeriod1" class="explanation">voting period: </p>
-    <p id="votingPeriod2" class="explanation">voting period: </p>
+    <p id="votingPeriod1" class="explanation"> voting period: </p>
+    <p id="votingPeriod2" class="explanation"> voting period: </p>
     
     <p id="p2" class="explanation">
     Once time is up, votes are tallied up and the move with the most votes is made on the board. 
@@ -81,15 +90,7 @@
     your move, press the “SUBMIT” button below the Google sign-in. You may only submit one move per turn cycle.
     </p>
 
-   <button id="undo">Undo Move</button><br>
-   <button id="sendData">Submit Move</button><div id="response" class="text"></div>
-
    <script src="chess.js"></script>
    <script src="main.js"></script>
-
-    <div id="OAuthButton" class="g-signin2" data-width="160" data-height="45" data-theme="dark" data-onsuccess="onSignIn"></div>
-
-    <div id="status" class="text">Status</div>
-    <div id="countdown" class="text"></div>
 </body>
 </html>
