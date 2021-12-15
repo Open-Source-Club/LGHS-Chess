@@ -38,7 +38,6 @@ function onSnapEnd() {
 function updateStatus() {
     let gameStatus
     let gameAlert = null
-    if (votingClosed === true){$('#status').html('Voting Closed'); return}
     school = chess.turn() === 'w' ? schoolW.nameAbrv: schoolB.nameAbrv
     gameStatus = `${school}'s Move`
 
@@ -46,6 +45,7 @@ function updateStatus() {
         school = chess.turn() === 'w' ? schoolB.nameAbrv: schoolW.nameAbrv
         gameStatus = 'Game Over'
         gameAlert = `${school} WINS`
+        gameOver = true
         board.flip()
     }
     else if (chess.in_draw()) {
@@ -56,11 +56,69 @@ function updateStatus() {
         gameAlert = 'IN CHECK'
     }
 
-    $('#status').html(gameStatus)
-    if (gameAlert != null){
-        $('#alert').html(gameAlert).css({"color": "red"})
-        gameOver = true
+    if (votingClosed && gameOver == false) $('#status').html('Voting Closed')
+    else $('#status').html(gameStatus)
+
+    if (gameAlert != null) $('#alert').html(gameAlert).css({"color": "red"})
+}
+
+const getCountDownTime = () => {
+    let dateNow = new Date()
+    const timesMs = [
+        new Date(dateNow.getFullYear(), dateNow.getMonth(), dateNow.getDate(), schoolB.executeTime[0], schoolB.executeTime[1], 0, 0).getTime(),
+        new Date(dateNow.getFullYear(), dateNow.getMonth(), dateNow.getDate(), schoolW.moveTime[0], schoolW.moveTime[1], 0, 0).getTime(),
+        new Date(dateNow.getFullYear(), dateNow.getMonth(), dateNow.getDate(), schoolB.tallyTime[0], schoolB.tallyTime[1], 0, 0).getTime()
+    ]
+
+    let countDownTime
+    for(var t = 0; t < timesMs.length; t++){
+        if (timesMs[t] - dateNow.getTime() > 0){
+            countDownTime = timesMs[t]
+            break
+        }
     }
+    if (countDownTime === undefined){
+        countDownTime = new Date(dateNow.getFullYear(), dateNow.getMonth(), dateNow.getDate() + 1, schoolB.executeTime[0], schoolB.executeTime[1], 0, 0).getTime()
+        votingClosed = true
+    }
+    else if (t === 0){
+        votingClosed = true
+    }
+
+    return [dateNow, countDownTime]
+}
+
+const startCountDown = (time) => {
+    dateNow = time[0]
+    countDownTime = time[1]
+    timer = document.getElementById("countdown")
+
+    const countDown = () => {
+        dateNow = new Date().getTime()
+        let remTime = countDownTime - dateNow
+
+        let hours = Math.floor((remTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
+        let minutes = Math.floor((remTime % (1000 * 60 * 60)) / (1000 * 60))
+        let seconds = Math.floor((remTime % (1000 * 60)) / 1000)
+
+        timer.innerHTML = `${hours}:${minutes}:${seconds}`
+
+        if (remTime < 0) {
+            clearInterval(countDown)
+            timer.innerHTML = '0:0:0'
+            location.reload()
+        }
+    }
+
+    setInterval(countDown, 1000)
+    countDown()
+}
+
+const undoMove = () => {
+    if (moveConfirmed === true){return 'Already Moved'}
+    chess.undo()
+    move = null
+    board.position(chess.fen())
 }
 
 const loadData = () => {
@@ -92,67 +150,16 @@ const loadData = () => {
             pieceTheme: '{piece}.png'
         })
 
+        countDownTime = getCountDownTime()
         updateStatus()
-        if (gameOver === false) startCountDown()
+        if (gameOver === false) startCountDown(countDownTime)
     }
-}
-
-const startCountDown = () => {
-    let dateNow = new Date()
-    const timesMs = [
-        new Date(dateNow.getFullYear(), dateNow.getMonth(), dateNow.getDate(), schoolB.executeTime[0], schoolB.executeTime[1], 0, 0).getTime(),
-        new Date(dateNow.getFullYear(), dateNow.getMonth(), dateNow.getDate(), schoolW.moveTime[0], schoolW.moveTime[1], 0, 0).getTime(),
-        new Date(dateNow.getFullYear(), dateNow.getMonth(), dateNow.getDate(), schoolB.tallyTime[0], schoolB.tallyTime[1], 0, 0).getTime()
-    ]
-
-    let countDownTime
-    for(var t = 0; t < timesMs.length; t++){
-        if (timesMs[t] - dateNow.getTime() > 0){
-            countDownTime = timesMs[t]
-            break
-        }
-    }
-    if (countDownTime === undefined){
-        countDownTime = new Date(dateNow.getFullYear(), dateNow.getMonth(), dateNow.getDate() + 1, schoolB.executeTime[0], schoolB.executeTime[1], 0, 0).getTime()
-        votingClosed = true
-    }
-    else if (t === 0){
-        votingClosed = true
-    }
-
-    timer = document.getElementById("countdown")
-    const countDown = () => {
-        dateNow = new Date().getTime()
-        let remTime = countDownTime - dateNow
-
-        let hours = Math.floor((remTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
-        let minutes = Math.floor((remTime % (1000 * 60 * 60)) / (1000 * 60))
-        let seconds = Math.floor((remTime % (1000 * 60)) / 1000)
-
-        timer.innerHTML = `${hours}:${minutes}:${seconds}`
-
-        if (remTime < 0) {
-            clearInterval(countDown)
-            timer.innerHTML = '0:0:0'
-            location.reload()
-        }
-    }
-
-    setInterval(countDown, 1000)
-    countDown()
 }
 
 const checkMobil = () => {
     if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)){
         $('#board').css({"width": screen.width - 14})
     }
-}
-
-const undoMove = () => {
-    if (moveConfirmed === true){return 'Already Moved'}
-    chess.undo()
-    move = null
-    board.position(chess.fen())
 }
 
 const postData = () => {
