@@ -26,4 +26,5 @@ Chessboard('board', {
     draggable: false,
     position: chess.fen(),
     orientation: turn,
+    pieceTheme: '{piece}.png'
 })

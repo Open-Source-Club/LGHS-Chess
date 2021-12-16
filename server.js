@@ -16,14 +16,15 @@ const app = express()
 app.use(express.json())
 app.use(favicon(__dirname + '/favicon.ico'))
 
-let credentials = {valid: true}
+var credentials = {
+    valid: true
+}
 try {
-    credentials.key = fs.readFileSync(config.SSLKeyPath + 'privkey.pem', 'utf8')
-    credentials.cert = fs.readFileSync(config.SSLKeyPath + 'cert.pem', 'utf8')
-    credentials.ca = fs.readFileSync(config.SSLKeyPath + 'chain.pem', 'utf8')
+    credentials.key = fs.readFileSync(`/etc/letsencrypt/live/${config.domain}/privkey.pem`, 'utf8')
+    credentials.cert = fs.readFileSync(`/etc/letsencrypt/live/${config.domain}/cert.pem`, 'utf8')
+    credentials.ca = fs.readFileSync(`/etc/letsencrypt/live/${config.domain}/chain.pem`, 'utf8')
 }
 catch (err) {
-    console.log('Error reading SSL keys, HTTPS will be disabled')
     credentials.valid = false
 }
 
@@ -32,18 +33,17 @@ app.use(function(request, response, next) {
     if (credentials.valid && !request.secure) {
         return response.redirect('https://' + request.headers.host + request.url)
     }
-
     next()
 })
 
 const oAuthClient = new OAuth2Client(config.OAuthId)
 let gameStarted = false
+let gameOver;
 
-app.use(express.static('boardScripts'))
-app.use(express.static('boardCaptures'))
-app.use(express.static('boardDependencies/js'))
-app.use(express.static('boardDependencies/css'))
-app.use(express.static('boardDependencies/img/chesspieces/wikipedia'))
+app.use(express.static('scrpits'))
+app.use(express.static('node_modules/chess.js'))
+app.use(express.static('node_modules/@chrisoakman/chessboardjs/dist'))
+app.use(express.static('chesspieces'))
 
 let chess = null
 let pendingMove = []
@@ -92,6 +92,7 @@ async function loadBoard(){
     if (movesResult.length === 0){chess = new Chess(); console.log('Loaded New Board'); return}
 
     chess = new Chess(movesResult.at(-1).fen)
+    gameOver = chess.game_over()
     console.log('Loaded Board: ' + chess.fen())
 }
 
@@ -104,161 +105,7 @@ function verifyMove(move){
     return 'Invalid'
 }
 
-async function checkAndInsert(verifiedUser, move){
-    if (pendingMove.length != 0){return 'Already Pending Move'}
-    if (verifiedUser === undefined){return 'Invalid OAuth Sign In'}
-    else if (!(verifiedUser.domain === config.schoolW.domain || verifiedUser.domain === config.schoolB.domain)){return 'Not School Email'}
-
-    let collection
-    if (chess.turn() === 'w'){
-        if (verifiedUser.domain === config.schoolW.domain){collection = whiteUsersDB}
-        else {return `Not ${config.schoolB.nameAbrv}'s Turn, Reload `}
-    }
-    else{
-        if (verifiedUser.domain === config.schoolB.domain){collection = blackUsersDB}
-        else {return `Not ${config.schoolW.nameAbrv}'s Turn, Reload`}
-    }
-
-    if (verifyMove(move) != 'Valid'){return 'Invalid move'}
-    
-    const date = new Date(new Date().toLocaleString('en-US', {timeZone : 'America/Los_Angeles'}))
-    const dateStr = `${date.getMonth()}-${date.getDate()}-${date.getFullYear()}`
-    const hours = date.getHours()
-
-    const user = await collection.findOne({email: verifiedUser.email})
-
-    if (user === null){
-        await collection.insertOne({
-            email: verifiedUser.email,
-            name: verifiedUser.name,
-            userId: verifiedUser.userId,
-            moves: [{
-                dateTime: {
-                    date: dateStr,
-                    time: hours
-                },
-                move: {
-                    from: move.from,
-                    to: move.to
-                } 
-            }]
-        })
-        discordWebhook(verifiedUser.name, move)
-        return 'Inserted New User'
-    }
-
-    else if (user.moves.at(-1).dateTime.date === dateStr){return 'Already Moved Today'}
-
-    await collection.updateOne(
-        {name: verifiedUser.name},
-        {$addToSet: {
-            moves:{
-                dateTime: {
-                    date: dateStr,
-                    time: date.getHours()
-                },
-                move: {
-                    from: move.from,
-                    to: move.to
-                } 
-            }
-        } 
-    })
-
-    discordWebhook(verifiedUser.name, move)
-    return 'Inserted Move'
-}
-
-async function verifyOAuth(idToken) {
-    const ticket = await oAuthClient.verifyIdToken({
-        idToken: idToken,
-        audience: config.OAuthId,
-    })
-    const payload = ticket.getPayload()
-    
-    return {email: payload['email'], domain: payload['email'].split('@')[1], name: payload['name'], userId: payload['sub']}
-}
-
-function verifyRequest(form){
-    try {
-        if (typeof form.idToken === 'string' && typeof form.move.from === 'string' && typeof form.move.to === 'string'){return 'Valid Request'}
-        else {return 'Invalid Request'}
-    }
-    
-    catch (error) {return 'Invalid Request'}
-}
-
-async function tallyMoves(){ //tally and execute
-    const date = new Date(new Date().toLocaleString('en-US', {timeZone : 'America/Los_Angeles'}))
-    const dateStr = `${date.getMonth()}-${date.getDate()}-${date.getFullYear()}`
-
-    let collection
-    if (chess.turn() === 'w'){collection = whiteUsersDB}
-    else {collection = blackUsersDB}
-    const votedUsers = await collection.find({
-        moves: {
-            $elemMatch: {
-                'dateTime.date': dateStr
-            }
-        }
-    }).toArray()
-    if (votedUsers.length === 0){console.log('No Moves To Tally'); return}
-
-    let moveVotes = {}
-    for (user in votedUsers){
-        let moveStr = `${votedUsers[user].moves.at(-1).move.from},${votedUsers[user].moves.at(-1).move.to}`
-    
-        if (moveVotes.hasOwnProperty(moveStr)){moveVotes[moveStr] ++}
-        else {moveVotes[moveStr] = 1}
-    }
-
-    let finalMove = `${votedUsers[0].moves.at(-1).move.from},${votedUsers[0].moves.at(-1).move.to}` //find move with highest votes
-    for (move in moveVotes){
-        if (moveVotes[move] > moveVotes[finalMove]){finalMove = move}
-    }
-
-    let equallyVoted = [] //check if any moves got the same ammount of votes
-    for (move in moveVotes){
-        if (moveVotes[move] === moveVotes[finalMove]){equallyVoted.push(move)}
-    }
-
-    if (equallyVoted.length > 1){finalMove = equallyVoted[Math.floor(Math.random() * equallyVoted.length)]}
-
-    pendingMove = [finalMove, dateStr]
-    console.log(`Tally Result: ${finalMove}`)
-}
-
-async function executeMove(){
-    if (pendingMove.length != 0){
-        move = pendingMove[0].split(',')
-    }
-    else {
-        possibleMoves = chess.moves({verbose: true})
-        randomMove = possibleMoves[Math.floor(Math.random() * possibleMoves.length)]
-        move = [randomMove.from, randomMove.to]
-        console.log('No Pending Move, Executing Random Move')
-    }
-
-    await discordWebhook(null, move)
-    clearBoardCaptures()
-
-    const moveResult = chess.move({from: move[0], to: move[1], promotion: 'q'})
-    await movesDB.insertOne({fen: chess.fen(), move: moveResult, date: pendingMove[1]})
-
-    pendingMove = []
-    console.log(`Executed Move: ${move}`)
-}
-
-async function clearBoardCaptures(){
-    fs.readdir('boardCaptures', (err, files) => {
-        for (const file of files) {
-            if (file.split('.')[1] != 'png') continue
-            fs.unlink(`boardCaptures/${file}`, err => {if (err) throw err})
-        }
-    })
-}
-
-async function discordWebhook(name, move){
+async function moveWebhook(name, move){
     const date = new Date()
 
     const turn = chess.turn()
@@ -291,11 +138,9 @@ async function discordWebhook(name, move){
     await browser.screenshot({path: `boardCaptures/${fileName}`});
 
     const requestData = {
-        method: "POST",
+        method: 'POST',
         url: config.userWebhookUrl,
-        headers: {
-            "Content-Type": "multipart/form-data"
-        },
+        headers: {'Content-Type': 'multipart/form-data'},
         formData : {
             file1 : fs.createReadStream(`boardCaptures/${fileName}`),
             payload_json: JSON.stringify({
@@ -312,8 +157,8 @@ async function discordWebhook(name, move){
     }
 
     request(requestData, function (err, res) {
-        if (err) console.log(err)
-        console.log(`Sent User Channel Webhook: ${res.statusCode}`)
+        if (err) console.log("User Move Webhook Error")
+        else console.log(`Sent User Move Webhook: ${res.statusCode}`)
     })
 
     if (color2 === null) return
@@ -330,28 +175,207 @@ async function discordWebhook(name, move){
     })
 
     request(requestData, function (err, res) {
-        if(err) console.log(err)
-        console.log(`Sent School Channel Webhook: ${res.statusCode}`)
+        if (err) console.log("School Move Webhook Error")
+        else console.log(`Sent School Move Webhook: ${res.statusCode}`)
     })
 }
 
-async function scheculeMoves(){
-    const whiteMove = new CronJob(`0 ${config.schoolW.moveTime[1]} ${config.schoolW.moveTime[0]} * * *`, async function() {
+async function turnWebhook(){
+    const roldID = chess.turn() === 'w' ? config.schoolW.roleID : config.schoolB.roleID
+    const requestData = {
+        method: 'POST',
+        url: config.turnWebhookUrl,
+        headers: {'Content-Type': 'application/json'},
+        formData : {
+            content: `<@&${roldID}> Your Move`
+        }
+    }
+
+    request(requestData, function (err, res) {
+        if (err) console.log("Turn Notification Webhook Error")
+        else console.log(`Sent Turn Notification Webhook: ${res.statusCode}`)
+    })
+}
+
+async function checkAndInsert(verifiedUser, move){
+    if (pendingMove.length != 0){return 'Already Pending Move'}
+    if (verifiedUser === undefined){return 'Invalid OAuth Sign In'}
+    else if (!(verifiedUser.domain === config.schoolW.domain || verifiedUser.domain === config.schoolB.domain)){return 'Not School Email'}
+
+    let collection
+    if (chess.turn() === 'w'){
+        if (verifiedUser.domain === config.schoolW.domain){collection = whiteUsersDB}
+        else {return `Not ${config.schoolB.nameAbrv}'s Turn, Reload `}
+    }
+    else{
+        if (verifiedUser.domain === config.schoolB.domain){collection = blackUsersDB}
+        else {return `Not ${config.schoolW.nameAbrv}'s Turn, Reload`}
+    }
+
+    if (verifyMove(move) != 'Valid'){return 'Invalid move'}
+    
+    const date = new Date(new Date().toLocaleString('en-US', {timeZone : 'America/Los_Angeles'}))
+    const dateStr = `${date.getMonth()}-${date.getDate()}-${date.getFullYear()}`
+    const user = await collection.findOne({email: verifiedUser.email})
+
+    if (user === null){
+        await collection.insertOne({
+            email: verifiedUser.email,
+            name: verifiedUser.name,
+            userId: verifiedUser.userId,
+            moves: [{
+                date: dateStr,
+                move: {
+                    from: move.from,
+                    to: move.to
+                } 
+            }]
+        })
+        moveWebhook(verifiedUser.name, move)
+        return 'Inserted New User'
+    }
+
+    else if (user.moves.at(-1).date === dateStr && config.production == true){return 'Already Moved Today'}
+
+    await collection.updateOne(
+        {name: verifiedUser.name},
+        {$addToSet: {
+            moves:{
+                date: dateStr,
+                move: {
+                    from: move.from,
+                    to: move.to
+                } 
+            }
+        } 
+    })
+
+    moveWebhook(verifiedUser.name, move)
+    return 'Inserted Move'
+}
+
+async function verifyOAuth(idToken) {
+    const ticket = await oAuthClient.verifyIdToken({
+        idToken: idToken,
+        audience: config.OAuthId,
+    })
+    const payload = ticket.getPayload()
+    
+    return {email: payload['email'], domain: payload['email'].split('@')[1], name: payload['name'], userId: payload['sub']}
+}
+
+function verifyRequest(form){
+    try {
+        if (typeof form.idToken === 'string' && typeof form.move.from === 'string' && typeof form.move.to === 'string'){return 'Valid Request'}
+        else {return 'Invalid Request'}
+    }
+    
+    catch (error) {return 'Invalid Request'}
+}
+
+async function tallyMoves(){
+    const date = new Date(new Date().toLocaleString('en-US', {timeZone : 'America/Los_Angeles'}))
+    const dateStr = `${date.getMonth()}-${date.getDate()}-${date.getFullYear()}`
+
+    let collection
+    if (chess.turn() === 'w'){collection = whiteUsersDB}
+    else {collection = blackUsersDB}
+    const votedUsers = await collection.find({
+        moves: {
+            $elemMatch: {
+                date: dateStr
+            }
+        }
+    }).toArray()
+    if (votedUsers.length === 0){console.log('No Moves To Tally'); return}
+
+    let moveVotes = {}
+    for (user in votedUsers){
+        let moveStr = `${votedUsers[user].moves.at(-1).move.from},${votedUsers[user].moves.at(-1).move.to}`
+    
+        if (moveVotes.hasOwnProperty(moveStr)){moveVotes[moveStr] ++}
+        else {moveVotes[moveStr] = 1}
+    }
+
+    let finalMove = `${votedUsers[0].moves.at(-1).move.from},${votedUsers[0].moves.at(-1).move.to}` //find move with highest votes
+    for (move in moveVotes){
+        if (moveVotes[move] > moveVotes[finalMove]){finalMove = move}
+    }
+
+    let equallyVoted = [] //check if any moves got the same ammount of votes
+    for (move in moveVotes){
+        if (moveVotes[move] === moveVotes[finalMove]){equallyVoted.push(move)}
+    }
+
+    if (equallyVoted.length > 1){finalMove = equallyVoted[Math.floor(Math.random() * equallyVoted.length)]}
+
+    pendingMove = [finalMove, dateStr]
+    console.log(`Tally Result: ${finalMove}`)
+}
+
+async function startCron(){
+    if (gameOver) return
+    whiteMoveCron = new CronJob(`0 ${config.schoolW.moveTime[1]} ${config.schoolW.moveTime[0]} * * *`, async function() {
         await tallyMoves(); await executeMove()}, 
         null, true, 'America/Los_Angeles')
 
-    const blackTally = new CronJob(`0 ${config.schoolB.tallyTime[1]} ${config.schoolB.tallyTime[0]} * * *`, async function() {
+    blackTallyCron = new CronJob(`0 ${config.schoolB.tallyTime[1]} ${config.schoolB.tallyTime[0]} * * *`, async function() {
         await tallyMoves()},
         null, true, 'America/Los_Angeles')
 
-    const blackExecute = new CronJob(`0 ${config.schoolB.executeTime[1]} ${config.schoolB.executeTime[0]} * * *`, async function() {
+    blackExecuteCron = new CronJob(`0 ${config.schoolB.executeTime[1]} ${config.schoolB.executeTime[0]} * * *`, async function() {
         await executeMove()},
         null, true, 'America/Los_Angeles')
 
-    whiteMove.start()
-    blackTally.start()
-    blackExecute.start()
-    console.log('Scheduled Moves')
+    whiteMoveCron.start()
+    blackTallyCron.start()
+    blackExecuteCron.start()
+    console.log('Scheduled Cron Jobs')
+}
+
+async function stopCron(){
+    if (config.production === false) return
+    whiteMoveCron.stop()
+    blackTallyCron.stop()
+    blackExecuteCron.stop()
+    console.log('Stopped Cron Jobs')
+}
+
+async function executeMove(){
+    if (pendingMove.length != 0){
+        move = pendingMove[0].split(',')
+    }
+    else {
+        possibleMoves = chess.moves({verbose: true})
+        randomMove = possibleMoves[Math.floor(Math.random() * possibleMoves.length)]
+        move = [randomMove.from, randomMove.to]
+        console.log('No Pending Move, Executing Random Move')
+    }
+
+    await moveWebhook(null, move)
+    turnWebhook()
+    clearBoardCaptures()
+
+    const moveResult = chess.move({from: move[0], to: move[1], promotion: 'q'})
+    await movesDB.insertOne({fen: chess.fen(), move: moveResult, date: pendingMove[1]})
+
+    pendingMove = []
+    console.log(`Executed Move: ${move}`)
+
+    gameOver = chess.game_over()
+    if (gameOver){
+        console.log('Game Over')
+        stopCron()
+    }
+}
+
+async function clearBoardCaptures(){
+    fs.readdir('boardCaptures', (err, files) => {
+        for (const file of files) {
+            if (file.split('.')[1] != 'png') continue
+            fs.unlink(`boardCaptures/${file}`, err => {if (err) throw err})
+        }
+    })
 }
 
 function createHTTPSServer(){
@@ -359,9 +383,13 @@ function createHTTPSServer(){
         console.log('Starting HTTPS Server...')
         https.createServer(credentials, app).listen(443)
     }
+    else{
+        console.log('Error reading SSL keys, HTTPS will be disabled')
+    }
 }
 
 function gameStartCheck(){
+    if (gameOver) {console.log('Game Over'); return}
     const dateNow = new Date(new Date().toLocaleString('en-US', {timeZone : 'America/Los_Angeles'}))
     const startDateMs = new Date(
         new Date(
@@ -370,13 +398,13 @@ function gameStartCheck(){
     )
 
     if (startDateMs - dateNow.getTime() > 0){
-        console.log("Waiting For Game To Start")
+        console.log('Waiting For Game To Start')
         
         const cronStr = `0 ${config.gameStartDate[3].toString()} ${config.gameStartDate[2].toString()} ${config.gameStartDate[1].toString()} ${config.gameStartDate[0].toString()} *`
         const startGame = new CronJob(cronStr, function() {
             gameStarted = true
-            scheculeMoves()
-            console.log("Game Started")
+            startCron()
+            console.log('Game Started')
             
             startGame.stop()
         }, null, true, 'America/Los_Angeles')
@@ -386,12 +414,16 @@ function gameStartCheck(){
     }
 
     gameStarted = true
-    scheculeMoves()
-    console.log("Game Started")
+    startCron()
+    console.log('Game Started')
 }
 
 function enableTestMove(){
     app.post('/testMove', async (req, res) => {
+        if (gameOver){
+            res.send('Game Is Over')
+            return
+        }
         await tallyMoves()
         await executeMove()
         res.send('Tallied and Executed')
@@ -399,12 +431,16 @@ function enableTestMove(){
 }
 
 app.get('/', (req, res) => {
-    if (gameStarted === true){res.sendFile(__dirname + '/board.html')}
-    else {res.sendFile(__dirname + '/waitPage.html')}
+    if (gameStarted === true){res.sendFile(__dirname + '/html/board.html')}
+    else {res.sendFile(__dirname + '/html/waitPage.html')}
 })
 
 app.post('/', async (req, res) => {
-    if (verifyRequest(req.body) != 'Valid Request'){
+    if (gameOver){
+        res.send('Game Is Over')
+        return
+    }
+    else if (verifyRequest(req.body) != 'Valid Request'){
         console.log('Invalid Request')
         res.send('Invalid Request')
         return 'Invalid Request'
@@ -421,12 +457,15 @@ app.post('/', async (req, res) => {
 })
 
 app.get('/fetchData', (req, res) => {res.json({fen: chess.fen(), OAuthId: config.OAuthId, schoolW: config.schoolW, schoolB: config.schoolB, gameStartDate: config.gameStartDate})})
-app.get('/boardView', (req, res) => {res.sendFile(__dirname + '/boardView.html')})
+app.get('/boardView', (req, res) => {res.sendFile(__dirname + '/html/boardView.html')})
 
 ;(async () => {
     await mongoConnect()
     await loadBoard()
     await startBrowser()
+    if (!fs.existsSync('boardCaptures')) {
+        fs.mkdirSync('boardCaptures')
+    }
 
     console.log('Starting HTTP Server...')
     app.listen(80)
@@ -440,6 +479,6 @@ app.get('/boardView', (req, res) => {res.sendFile(__dirname + '/boardView.html')
         console.log('Production: False')
         enableTestMove()
         gameStarted = true
-        console.log("Game Started")
+        gameOver ? console.log('Game Over') : console.log('Game Started')
     }
 })()

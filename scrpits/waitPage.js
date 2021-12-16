@@ -16,6 +16,7 @@ const main = () => {
 const editPage = (school1, school2) => {
     let timeStr1 = timeToStr(school2.executeTime) + " - " + timeToStr(school1.moveTime)
     let timeStr2 = timeToStr(school1.moveTime) + " - " + timeToStr(school2.tallyTime)
+
     document.getElementById("votingPeriod1").innerHTML = school1.nameAbrv + document.getElementById("votingPeriod1").innerHTML + timeStr1;
     document.getElementById("votingPeriod2").innerHTML = school2.nameAbrv + document.getElementById("votingPeriod2").innerHTML + timeStr2;
 	let p2str = document.getElementById("p2").innerHTML
@@ -25,6 +26,7 @@ const editPage = (school1, school2) => {
 	while (p2str.indexOf("[school2]") != -1) {
 		p2str = p2str.substring(0, p2str.indexOf("[school2]")) + school2.nameAbrv + p2str.substring(p2str.indexOf("[school2]") + 9)
 	}
+    
 	document.getElementById("p2").innerHTML = p2str
 }
 
@@ -32,7 +34,6 @@ const editPage = (school1, school2) => {
 const timeToStr = (time) => {
     return time[0] > 12 ? (time[0]-12) + ":" + time[1] + " pm" : time[0] + ":" + time[1] + " am"
 }
-
 
 const checkMobil = () => {
     if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)){
@@ -43,7 +44,7 @@ const checkMobil = () => {
         document.getElementById("image").style = "width:" + 90 + "%;height:" + 90 + "%;"
         
         let pSize = (parseInt(rs.getPropertyValue('--font-size-p').split('vw')[0]) + 2) + 'vw';
-        let hSize = (parseInt(rs.getPropertyValue('--font-size-h').charAt('vw')[0]) + 2) + 'vw';
+        let hSize = (parseInt(rs.getPropertyValue('--font-size-h').split('vw')[0]) + 2) + 'vw';
     
         r.style.setProperty('--font-size-p', pSize);
         r.style.setProperty('--font-size-h', hSize);

@@ -4,11 +4,11 @@
     
     "OAuthId": "",
     "domain": "",
-    "SSLKeyPath": "",
+    "mongoUrl": "",
     
     "userWebhookUrl": "",
     "schoolWebhookUrl": "",
-    "mongoUrl": "",
+    "turnWebhookUrl": "",
     
     "schoolW": {
         "name": "",
@@ -16,7 +16,8 @@
         "domain": "",
         "color1": "",
         "color2": "",
-        "moveTime": [0, 0]
+        "moveTime": [0, 0],
+        "roleID": ""
     },
     "schoolB": {
         "name": "",
@@ -25,6 +26,7 @@
         "color1": "",
         "color2": "",
         "tallyTime": [0, 0],
-        "executeTime": [0, 0]
+        "executeTime": [0, 0],
+        "roleID": ""
     }    
 }
