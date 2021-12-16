@@ -58,25 +58,25 @@ function updateStatus() {
 
     if (votingClosed && gameOver == false) $('#status').html('Voting Closed')
     else $('#status').html(gameStatus)
+}
 
 const loadData = () => {
-    let xhr = new XMLHttpRequest();
-    xhr.open('GET', '/fetchData', true);
-    xhr.send();
+    let xhr = new XMLHttpRequest()
+    xhr.open('GET', '/fetchData', true)
+    xhr.send()
     
     xhr.onload = () => {
         response = JSON.parse(xhr.response)
         schoolW = response.schoolW
         schoolB = response.schoolB
 
-        editPage(schoolW, schoolB);
-
-        $('meta[name="google-signin-client_id"]').attr('content', response.OAuthId);
-        const newScript = document.createElement("script");
+        $('meta[name="google-signin-client_id"]').attr('content', response.OAuthId)
+        const newScript = document.createElement("script")
         newScript.src = "https://apis.google.com/js/platform.js"
-        const currentDiv = document.getElementById("OAuthButton");
+
+        const currentDiv = document.getElementById("OAuthButton")
         document.getElementById("boardAndButtons").insertBefore(newScript, currentDiv);
-       
+
         chess = new Chess(response.fen)
         turn = chess.turn() === 'w' ? 'white' : 'black'
         board = Chessboard('board', {
@@ -85,13 +85,14 @@ const loadData = () => {
             orientation: turn,
             onDragStart: onDragStart,
             onDrop: onDrop,
-            onSnapEnd: onSnapEnd
+            onSnapEnd: onSnapEnd,
+            pieceTheme: '{piece}.png'
         })
 
-        startCountDown()
+        countDownTime = getCountDownTime()
         updateStatus()
-    };
-    if (gameAlert != null) $('#alert').html(gameAlert).css({"color": "red"})
+        if (gameOver === false) startCountDown(countDownTime)
+    }
 }
 
 const getCountDownTime = () => {
@@ -183,47 +184,6 @@ const undoMove = () => {
     chess.undo()
     move = null
     board.position(chess.fen())
-}
-
-const loadData = () => {
-    let xhr = new XMLHttpRequest()
-    xhr.open('GET', '/fetchData', true)
-    xhr.send()
-    
-    xhr.onload = () => {
-        response = JSON.parse(xhr.response)
-        schoolW = response.schoolW
-        schoolB = response.schoolB
-
-        $('meta[name="google-signin-client_id"]').attr('content', response.OAuthId)
-        const newScript = document.createElement("script")
-        newScript.src = "https://apis.google.com/js/platform.js"
-
-        const currentDiv = document.getElementById("OAuthButton")
-        document.body.insertBefore(newScript, currentDiv)
-       
-        chess = new Chess(response.fen)
-        turn = chess.turn() === 'w' ? 'white' : 'black'
-        board = Chessboard('board', {
-            draggable: true,
-            position: chess.fen(),
-            orientation: turn,
-            onDragStart: onDragStart,
-            onDrop: onDrop,
-            onSnapEnd: onSnapEnd,
-            pieceTheme: '{piece}.png'
-        })
-
-        countDownTime = getCountDownTime()
-        updateStatus()
-        if (gameOver === false) startCountDown(countDownTime)
-    }
-}
-
-const checkMobil = () => {
-    if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)){
-        $('#board').css({"width": screen.width - 14})
-    }
 }
 
 const postData = () => {
