@@ -12,13 +12,8 @@ let gameOver = false
 function onDragStart(source, piece, position, orientation) {
     document.body.style.overflow = 'hidden'
 
-    if (chess.game_over()) return false
-
-    if ((chess.turn() === 'w' && piece.search(/^b/) !== -1) ||
-        (chess.turn() === 'b' && piece.search(/^w/) !== -1) ||
-        (moveConfirmed === true || move != null)) {
-        return false
-    }
+    if (chess.game_over() || votingClosed || moveConfirmed || move != null) return false
+    if ((chess.turn() === 'w' && piece.search(/^b/) !== -1) || (chess.turn() === 'b' && piece.search(/^w/) !== -1)) return false
 }
 
 function onDrop(source, target) {
