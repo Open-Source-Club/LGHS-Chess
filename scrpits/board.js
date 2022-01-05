@@ -89,6 +89,8 @@ const loadData = () => {
             pieceTheme: '{piece}.png'
         })
 
+		editPage(schoolW, schoolB)
+
         countDownTime = getCountDownTime()
         updateStatus()
         if (gameOver === false) startCountDown(countDownTime)
@@ -154,6 +156,7 @@ const checkMobil = () => {
     if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)){
         $('#board').css({"width": screen.width - 14})
         $('.explanation').css({"float":"left", "clear":"left", "width":"100%"})
+		$('#countdown').css({"width":"160px", "margin-bottom":"5vh"})
     }
 }
 
