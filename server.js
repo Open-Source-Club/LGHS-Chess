@@ -181,7 +181,7 @@ async function moveWebhook(name, move){
 }
 
 async function turnWebhook(){
-    const roldID = chess.turn() === 'w' ? config.schoolW.roleID : config.schoolB.roleID
+    const roldID = chess.turn() === 'w' ? config.schoolB.roleID : config.schoolW.roleID
     const requestData = {
         method: 'POST',
         url: config.turnWebhookUrl,
