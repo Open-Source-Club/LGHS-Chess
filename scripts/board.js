@@ -53,8 +53,43 @@ function updateStatus() {
 
     if (votingClosed && gameOver == false) $('#status').html('Voting Closed')
     else $('#status').html(gameStatus)
+}
 
-    if (gameAlert != null) $('#alert').html(gameAlert).css({"color": "red"})
+const loadData = () => {
+    let xhr = new XMLHttpRequest()
+    xhr.open('GET', '/fetchData', true)
+    xhr.send()
+    
+    xhr.onload = () => {
+        response = JSON.parse(xhr.response)
+        schoolW = response.schoolW
+        schoolB = response.schoolB
+
+        $('meta[name="google-signin-client_id"]').attr('content', response.OAuthId)
+        const newScript = document.createElement("script")
+        newScript.src = "https://apis.google.com/js/platform.js"
+
+        const currentDiv = document.getElementById("OAuthButton")
+        document.getElementById("boardAndButtons").insertBefore(newScript, currentDiv);
+
+        chess = new Chess(response.fen)
+        turn = chess.turn() === 'w' ? 'white' : 'black'
+        board = Chessboard('board', {
+            draggable: true,
+            position: chess.fen(),
+            orientation: turn,
+            onDragStart: onDragStart,
+            onDrop: onDrop,
+            onSnapEnd: onSnapEnd,
+            pieceTheme: '{piece}.png'
+        })
+
+		editPage(schoolW, schoolB)
+
+        countDownTime = getCountDownTime()
+        updateStatus()
+        if (gameOver === false) startCountDown(countDownTime)
+    }
 }
 
 const getCountDownTime = () => {
@@ -95,6 +130,9 @@ const startCountDown = (time) => {
         let hours = Math.floor((remTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
         let minutes = Math.floor((remTime % (1000 * 60 * 60)) / (1000 * 60))
         let seconds = Math.floor((remTime % (1000 * 60)) / 1000)
+        
+        minutes = minutes < 10 ? '0'+minutes : minutes
+        seconds = seconds < 10 ? '0'+seconds : seconds
 
         timer.innerHTML = `${hours}:${minutes}:${seconds}`
 
@@ -109,52 +147,41 @@ const startCountDown = (time) => {
     countDown()
 }
 
+const checkMobil = () => {
+    if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)){
+        $('#board').css({"width": screen.width - 14})
+        $('.explanation').css({"float":"left", "clear":"left", "width":"100%"})
+		$('#countdown').css({"width":"160px", "margin-bottom":"5vh"})
+    }
+}
+
+const editPage = (school1, school2) => {
+    let timeStr1 = timeToStr(school2.executeTime) + " - " + timeToStr(school1.moveTime)
+    let timeStr2 = timeToStr(school1.moveTime) + " - " + timeToStr(school2.tallyTime)
+
+    document.getElementById("votingPeriod1").innerHTML = school1.nameAbrv + document.getElementById("votingPeriod1").innerHTML + timeStr1;
+    document.getElementById("votingPeriod2").innerHTML = school2.nameAbrv + document.getElementById("votingPeriod2").innerHTML + timeStr2;
+    
+	let p2str = document.getElementById("p2").innerHTML
+	while (p2str.indexOf("[school1]") != -1) {
+		p2str = p2str.substring(0, p2str.indexOf("[school1]")) + school1.nameAbrv + p2str.substring(p2str.indexOf("[school1]") + 9)
+	}
+	while (p2str.indexOf("[school2]") != -1) {
+		p2str = p2str.substring(0, p2str.indexOf("[school2]")) + school2.nameAbrv + p2str.substring(p2str.indexOf("[school2]") + 9)
+	}
+	document.getElementById("p2").innerHTML = p2str
+}
+
+//gets a time [hours, min] and converts to 12 hour time str
+const timeToStr = (time) => {
+    return time[0] > 12 ? (time[0]-12) + ":" + time[1] + " pm" : time[0] + ":" + time[1] + " am"
+}
+
 const undoMove = () => {
     if (moveConfirmed === true){return 'Already Moved'}
     chess.undo()
     move = null
     board.position(chess.fen())
-}
-
-const loadData = () => {
-    let xhr = new XMLHttpRequest()
-    xhr.open('GET', '/fetchData', true)
-    xhr.send()
-    
-    xhr.onload = () => {
-        response = JSON.parse(xhr.response)
-        schoolW = response.schoolW
-        schoolB = response.schoolB
-
-        $('meta[name="google-signin-client_id"]').attr('content', response.OAuthId)
-        const newScript = document.createElement("script")
-        newScript.src = "https://apis.google.com/js/platform.js"
-
-        const currentDiv = document.getElementById("OAuthButton")
-        document.body.insertBefore(newScript, currentDiv)
-       
-        chess = new Chess(response.fen)
-        turn = chess.turn() === 'w' ? 'white' : 'black'
-        board = Chessboard('board', {
-            draggable: true,
-            position: chess.fen(),
-            orientation: turn,
-            onDragStart: onDragStart,
-            onDrop: onDrop,
-            onSnapEnd: onSnapEnd,
-            pieceTheme: '{piece}.png'
-        })
-
-        countDownTime = getCountDownTime()
-        updateStatus()
-        if (gameOver === false) startCountDown(countDownTime)
-    }
-}
-
-const checkMobil = () => {
-    if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)){
-        $('#board').css({"width": screen.width - 14})
-    }
 }
 
 const postData = () => {
@@ -165,7 +192,7 @@ const postData = () => {
     if (domain === undefined){return "Not Signed In"}
     else if (!(domain === schoolW.domain || domain === schoolB.domain)){return 'Not Student Email'}
 
-    //swapped w and b because this could only run after the user has moved thus changing the move to the opposite color
+    // swapped w and b because this could only run after the user has moved thus changing the move to the opposite color
     if (chess.turn() === 'b' && domain != schoolW.domain){return `Not ${schoolW.nameAbrv} Account`}
     else if (chess.turn() === 'w' && domain != schoolB.domain){return `Not ${schoolB.nameAbrv} Account`}
 

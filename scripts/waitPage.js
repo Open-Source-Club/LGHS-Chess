@@ -20,7 +20,6 @@ const editPage = (school1, school2) => {
     document.getElementById("votingPeriod1").innerHTML = school1.nameAbrv + document.getElementById("votingPeriod1").innerHTML + timeStr1;
     document.getElementById("votingPeriod2").innerHTML = school2.nameAbrv + document.getElementById("votingPeriod2").innerHTML + timeStr2;
 	let p2str = document.getElementById("p2").innerHTML
-
 	while (p2str.indexOf("[school1]") != -1) {
 		p2str = p2str.substring(0, p2str.indexOf("[school1]")) + school1.nameAbrv + p2str.substring(p2str.indexOf("[school1]") + 9)
 	}
@@ -42,13 +41,16 @@ const checkMobil = () => {
         let r = document.querySelector(':root');
         let rs = getComputedStyle(r);
         
-        document.getElementById("image").style = "width:" + (screen.width - 100) + "px;height:" + (screen.width - 100) + "px;"
+        document.getElementById("image").style = "width:" + 90 + "%;height:" + 90 + "%;"
         
         let pSize = (parseInt(rs.getPropertyValue('--font-size-p').split('vw')[0]) + 2) + 'vw';
         let hSize = (parseInt(rs.getPropertyValue('--font-size-h').split('vw')[0]) + 2) + 'vw';
     
         r.style.setProperty('--font-size-p', pSize);
         r.style.setProperty('--font-size-h', hSize);
+
+        r.style.setProperty('--txt-width', '100%');
+        r.style.setProperty('--img-side', 'left');
 	}
 }
 
