@@ -378,16 +378,6 @@ async function clearBoardCaptures(){
     })
 }
 
-function createHTTPSServer(){
-    if (credentials.valid === true) {
-        console.log('Starting HTTPS Server...')
-        https.createServer(credentials, app).listen(443)
-    }
-    else{
-        console.log('Error reading SSL keys, HTTPS will be disabled')
-    }
-}
-
 function gameStartCheck(){
     if (gameOver) {console.log('Game Over'); return}
     const dateNow = new Date(new Date().toLocaleString('en-US', {timeZone : 'America/Los_Angeles'}))
@@ -470,11 +460,7 @@ app.get('/boardView', (req, res) => {res.sendFile(__dirname + '/html/boardView.h
     console.log('Starting HTTP Server...')
     app.listen(80)
     
-    if (config.production === true){
-        console.log('Production: True')
-        createHTTPSServer()
-        gameStartCheck()
-    }
+    if (config.production === true){console.log('Production: True'); gameStartCheck()}
     else{
         console.log('Production: False')
         enableTestMove()
