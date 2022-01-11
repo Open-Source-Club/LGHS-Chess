@@ -7,84 +7,93 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <style>
-		:root {
-			--font-size-p: 2vw;
-			--font-size-h: 3vw;
-            --img-side: right;
-            --txt-width: 65%;
-		}
 	
 		body {
 			background-color: black;
 			font-family: Trebuchet MS, sans-serif;
 			color: white;
+            font-size: 1.6rem;
 		}
         
-        #countdown{
+        #countdown {
             display: flex;
             justify-content: center;
-            font-size: 6vw;
             color: green;
+            font-size: 3rem;
         }
 
         #image {
-            float: var(--img-side);
+            float: right;
             border: 5px solid white;
-            width: 30%;
-        }
-
-        .mainText {
-            float: left;
-            width: var(--txt-width);
+            max-height: 80vh;
+            margin: 2vw;
         }
 		
         .noMargin {
             margin: 0px;
         }
 
-		p {
-		  font-size: var(--font-size-p);
+        h1 {
+          margin: 0px;
+          font-size: 2.5rem;
 		}
 
-        h1 {
-		  font-size: var(--font-size-h); 
-          margin: 0px;
-		}
+        .main {
+            display: flex;
+            flex-direction: column;
+        }
+
+        @media screen and (max-width: 900px) {
+            #image {
+                width: 90%;
+                max-height: none;
+                float: none;
+                display: block;
+                margin-left: auto;
+                margin-right: auto;
+                margin-bottom: 5vw;
+            }
+            #countdown {
+                margin-bottom: 5vw;
+            }
+        }
     </style>
 </head>
 <body>
     <div id="countdown"></div>
-	<h1 class="mainText">How LGHS Chess Works</h1>
-    
-    <p class="mainText">
-    LGHS Chess is played between two schools.
-    Anyone at the two participating schools can play.
-    You can submit a move at any point during your school’s turn in the game.
-    </p>
-    
     <img id="image" src="https://cdn.discordapp.com/attachments/616758839622107436/916998636120965120/unknown.png" alt="Vote Chess"> 
 
-    <p id="votingPeriod1" class="mainText noMargin">
-    voting period: 
-    </p>
-    <p id="votingPeriod2" class="mainText noMargin">
-    voting period: 
-    </p>
-    <p id="p2" class="mainText">
-    Once time is up, votes are tallied up and the move with the most votes is made on the board. Note, at the end of [school2]’s move, the votes will be tallied, but not displayed until the start of [school1]’s voting period the following morning to ensure each school has the same amount of decision-making time.
-    </p>
-    
-    <h1 class="mainText">How To Play LGHS Chess</h1>
+    <div class="main">
+        <h1>How LGHS Chess Works</h1>
+        
+        <p>
+        LGHS Chess is played between two schools.
+        Anyone at the two participating schools can play.
+        You can submit a move at any point during your school’s turn in the game.
+        </p>
+        
+        <p id="votingPeriod1" class="noMargin">
+        voting period: 
+        </p>
+        <p id="votingPeriod2" class="noMargin">
+        voting period: 
+        </p>
+        <p id="p2">
+        Once time is up, votes are tallied up and the move with the most votes is made on the board. Note, at the end of [school2]’s move, the votes will be tallied, but not displayed until the start of [school1]’s voting period the following morning to ensure each school has the same amount of decision-making time.
+        </p>
+        
+        <h1>How To Play LGHS Chess</h1>
 
-    <p class="mainText">
-    To play, you must sign-in to your school-provided Google account.
-    At the bottom of the screen, the display will show which school is to move.
-    If it is your school’s move, click and drag your school’s chess piece to a valid square.
-    You may undo your move anytime PRIOR TO pressing the “Submit” button.
-    To undo your move, press the “UNDO” button directly below the chess board.
-    When you are ready to finalize your move, press the “SUBMIT” button below the Google sign-in.
-    You may only submit one move per turn cycle.
-    </p>
+        <p>
+        To play, you must sign-in to your school-provided Google account.
+        At the bottom of the screen, the display will show which school is to move.
+        If it is your school’s move, click and drag your school’s chess piece to a valid square.
+        You may undo your move anytime PRIOR TO pressing the “Submit” button.
+        To undo your move, press the “UNDO” button directly below the chess board.
+        When you are ready to finalize your move, press the “SUBMIT” button below the Google sign-in.
+        You may only submit one move per turn cycle.
+        </p>
+    </div>
     
 	<script src="waitPage.js"></script>
 </body>
