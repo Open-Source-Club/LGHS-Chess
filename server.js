@@ -7,7 +7,6 @@ const { MongoClient } = require('mongodb')
 const { OAuth2Client } = require('google-auth-library')
 const puppeteer = require('puppeteer');
 const fs = require('fs')
-const https = require('https')
 
 try{var config = require('./myConfig.json')}
 catch(error){var config = require('./config.json')}
@@ -15,26 +14,6 @@ catch(error){var config = require('./config.json')}
 const app = express()
 app.use(express.json())
 app.use(favicon(__dirname + '/favicon.ico'))
-
-var credentials = {
-    valid: true
-}
-try {
-    credentials.key = fs.readFileSync(`/etc/letsencrypt/live/${config.domain}/privkey.pem`, 'utf8')
-    credentials.cert = fs.readFileSync(`/etc/letsencrypt/live/${config.domain}/cert.pem`, 'utf8')
-    credentials.ca = fs.readFileSync(`/etc/letsencrypt/live/${config.domain}/chain.pem`, 'utf8')
-}
-catch (err) {
-    credentials.valid = false
-}
-
-// Redirect HTTP to HTTPS if credentials are valid
-app.use(function(request, response, next) {
-    if (credentials.valid && !request.secure) {
-        return response.redirect('https://' + request.headers.host + request.url)
-    }
-    next()
-})
 
 const oAuthClient = new OAuth2Client(config.OAuthId)
 let gameStarted = false
@@ -458,7 +437,7 @@ app.get('/boardView', (req, res) => {res.sendFile(__dirname + '/html/boardView.h
     }
 
     console.log('Starting HTTP Server...')
-    app.listen(80)
+    app.listen(8080)
     
     if (config.production === true){console.log('Production: True'); gameStartCheck()}
     else{
