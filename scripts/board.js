@@ -57,7 +57,7 @@ function updateStatus() {
 
 const loadData = () => {
     let xhr = new XMLHttpRequest()
-    xhr.open('GET', '/fetchData', true)
+    xhr.open('GET', `${window.location.pathname}fetchData`, true)
     xhr.send()
     
     xhr.onload = () => {
