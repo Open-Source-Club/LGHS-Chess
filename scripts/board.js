@@ -197,7 +197,7 @@ const postData = () => {
     else if (chess.turn() === 'w' && domain != schoolB.domain){return `Not ${schoolB.nameAbrv} Account`}
 
     let xhr = new XMLHttpRequest()
-    xhr.open("POST", "/", true)
+    xhr.open("POST", `${window.location.pathname}fetchData`, true)
     xhr.setRequestHeader('Content-Type', 'application/json')
     
     xhr.send(JSON.stringify({
