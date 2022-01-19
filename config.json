@@ -5,6 +5,7 @@
     "OAuthId": "",
     "domain": "",
     "mongoUrl": "",
+    "reverseProxyEndpoint": "",
     
     "userWebhookUrl": "",
     "schoolWebhookUrl": "",

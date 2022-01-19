@@ -108,8 +108,8 @@ async function moveWebhook(name, move){
     else {from = move.from; to = move.to}
 
     const fileName = `${name}_${Date.now()}.png`.split(' ').join('')
-    if(config.production === true && credentials.valid === true){
-        await browser.goto(`https://${config.domain}/boardView?fen=${chess.fen()}&from=${from}&to=${to}`.split(' ').join('$'))
+    if(config.production){
+        await browser.goto(`https://${config.domain + config.reverseProxyEndpoint}/boardView?fen=${chess.fen()}&from=${from}&to=${to}`.split(' ').join('$'))
     }
     else{
         await browser.goto(`http://localhost/boardView?fen=${chess.fen()}&from=${from}&to=${to}`.split(' ').join('$'))
