@@ -147,14 +147,6 @@ const startCountDown = (time) => {
     countDown()
 }
 
-const checkMobil = () => {
-    if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)){
-        $('#board').css({"width": screen.width - 14})
-        $('.explanation').css({"float":"left", "clear":"left", "width":"100%"})
-		$('#countdown').css({"width":"160px", "margin-bottom":"5vh"})
-    }
-}
-
 const editPage = (school1, school2) => {
     let timeStr1 = timeToStr(school2.executeTime) + " - " + timeToStr(school1.moveTime)
     let timeStr2 = timeToStr(school1.moveTime) + " - " + timeToStr(school2.tallyTime)
@@ -234,7 +226,6 @@ function onSignIn(googleUser) {
     console.log(domain)
 }
 
-checkMobil()
 loadData()
 $('#undo').on('click', undoMove)
 document.getElementById("sendData").onclick = function (){
