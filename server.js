@@ -43,7 +43,7 @@ let gameOver;
 app.use(express.static('scripts'))
 app.use(express.static('node_modules/chess.js'))
 app.use(express.static('node_modules/@chrisoakman/chessboardjs/dist'))
-app.use(express.static('chesspieces'))
+app.use(express.static('images'))
 
 let chess = null
 let pendingMove = []
