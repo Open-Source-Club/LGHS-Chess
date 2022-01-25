@@ -1,7 +1,6 @@
 const express = require('express')
 const request = require('request');
 const CronJob = require('cron').CronJob
-const favicon = require('serve-favicon')
 const { Chess } = require('chess.js')
 const { MongoClient } = require('mongodb')
 const { OAuth2Client } = require('google-auth-library')
@@ -14,7 +13,6 @@ catch(error){var config = require('./config.json')}
 
 const app = express()
 app.use(express.json())
-app.use(favicon(__dirname + '/favicon.ico'))
 
 var credentials = {
     valid: true
