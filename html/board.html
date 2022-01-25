@@ -39,60 +39,76 @@
             font-size: 20px;
             color: white;
             font-family: 'Arial Black';
-            width: 65%;
-            float: right;
+            display: flex;
+            flex-direction: column;
+            padding: 1vw;
         }
         
         .noMargin{
             margin: 0;
         }
 
-        #undo{margin: 6px 0px; }
-        #sendData{margin: 0px 0px 3px 0px;}
-        #OAuthButton{margin: 3px 0px 0px 0px; width:160px;}
-        #status{margin: 4px 0px 0px 0px; width:160px;}
-        #countdown{width:160px;}
+        #boardAndButtons {float: left;}
+        #board {width: 500px;}
+        #undo {margin: 6px 0px; }
+        #sendData {margin: 0px 0px 3px 0px;}
+        #OAuthButton {margin: 3px 0px 0px 0px; width:160px;}
+        #status {margin: 4px 0px 0px 0px; width:160px;}
+        #countdown {width:160px;}
+
+        @media screen and (max-width: 1000px) {
+            #boardAndButtons {
+                float: none;
+            }
+            .explanation {
+                padding: 0;
+            }
+        }
+
     </style>
 </head>
 
 <body>
-    <div id="boardAndButtons" style="float: left;">
-        <div id="board" style="width: 500px;"></div>
+    <div id="boardAndButtons">
+        <div id="board"></div>
 
         <button id="undo">Undo Move</button><br>
-        <button id="sendData">Submit Move</button><div id="response" class="text"></div>
+        <button id="sendData">Submit Move</button>
+        <div id="response" class="text"></div>
         <div id="OAuthButton" class="g-signin2" data-width="160" data-height="45" data-theme="dark" data-onsuccess="onSignIn"></div>
 
         <div id="status" class="text">Status</div>
         <div id="countdown" class="text"></div>
     </div>
 
-    <h1 class="explanation noMargin">How LGHS Chess Works</h1>
+    <div class="explanation">
+        <h1 class="noMargin">How LGHS Chess Works</h1>
 
-    <p class="explanation">
-    LGHS Chess is played between two schools. Anyone at the two participating schools can play.
-    You can submit a move at any point during your school’s turn in the game.
-    </p>
+        <p>
+        LGHS Chess is played between two schools. Anyone at the two participating schools can play.
+        You can submit a move at any point during your school’s turn in the game.
+        </p>
 
-    <p id="votingPeriod1" class="explanation noMargin"> voting period: </p>
-    <p id="votingPeriod2" class="explanation noMargin"> voting period: </p>
-    
-    <p id="p2" class="explanation">
-    Once time is up, votes are tallied up and the move with the most votes is made on the board. 
-    Note, at the end of [school2]’s move, the votes will be tallied, but not displayed until the start 
-    of [school1]’s voting period the following morning to ensure each school has the same amount of 
-    decision-making time.
-    </p>
+        <p id="votingPeriod1" class="noMargin"> voting period: </p>
+        <p id="votingPeriod2" class="noMargin"> voting period: </p>
+        
+        <p id="p2">
+        Once time is up, votes are tallied up and the move with the most votes is made on the board. 
+        Note, at the end of [school2]’s move, the votes will be tallied, but not displayed until the start 
+        of [school1]’s voting period the following morning to ensure each school has the same amount of 
+        decision-making time.
+        </p>
 
-    <h1 class="explanation noMargin">How To Play LGHS Chess</h1>
-    
-    <p class="explanation">
-    To play, you must sign-in to your school-provided Google account. At the bottom of the screen, 
-    the display will show which school is to move. If it is your school’s move, click and drag your school’s 
-    chess piece to a valid square. You may undo your move anytime prior to pressing the SUBMIT button.
-    To undo your move, press the UNDO button. When you are ready to finalize 
-    your move, press the SUBMIT button. You may only submit one move per turn cycle.
-    </p>
+        <h1 class="noMargin">How To Play LGHS Chess</h1>
+        
+        <p>
+        To play, you must sign-in to your school-provided Google account. At the bottom of the screen, 
+        the display will show which school is to move. If it is your school’s move, click and drag your school’s 
+        chess piece to a valid square. You may undo your move anytime prior to pressing the SUBMIT button.
+        To undo your move, press the UNDO button. When you are ready to finalize 
+        your move, press the SUBMIT button. You may only submit one move per turn cycle.
+        </p>
+    </div>
 
    <script src="chess.js"></script>
    <script src="board.js"></script>

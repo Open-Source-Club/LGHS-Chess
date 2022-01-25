@@ -8,7 +8,6 @@ const main = () => {
         startDate = response.gameStartDate
 
         editPage(response.schoolW, response.schoolB);
-		checkMobil()
         countDown(startDate)
     };
 }
@@ -33,25 +32,6 @@ const editPage = (school1, school2) => {
 //gets a time [hours, min] and converts to non-military time str
 const timeToStr = (time) => {
     return time[0] > 12 ? (time[0]-12) + ":" + time[1] + " pm" : time[0] + ":" + time[1] + " am"
-}
-
-const checkMobil = () => {
-    if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)){
-        
-        let r = document.querySelector(':root');
-        let rs = getComputedStyle(r);
-        
-        document.getElementById("image").style = "width:" + 90 + "%;height:" + 90 + "%;"
-        
-        let pSize = (parseInt(rs.getPropertyValue('--font-size-p').split('vw')[0]) + 2) + 'vw';
-        let hSize = (parseInt(rs.getPropertyValue('--font-size-h').split('vw')[0]) + 2) + 'vw';
-    
-        r.style.setProperty('--font-size-p', pSize);
-        r.style.setProperty('--font-size-h', hSize);
-
-        r.style.setProperty('--txt-width', '100%');
-        r.style.setProperty('--img-side', 'left');
-	}
 }
 
 const countDown = (startDate) => {

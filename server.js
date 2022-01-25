@@ -1,7 +1,6 @@
 const express = require('express')
 const request = require('request');
 const CronJob = require('cron').CronJob
-const favicon = require('serve-favicon')
 const { Chess } = require('chess.js')
 const { MongoClient } = require('mongodb')
 const { OAuth2Client } = require('google-auth-library')
@@ -13,7 +12,6 @@ catch(error){var config = require('./config.json')}
 
 const app = express()
 app.use(express.json())
-app.use(favicon(__dirname + '/favicon.ico'))
 
 const oAuthClient = new OAuth2Client(config.OAuthId)
 let gameStarted = false
@@ -22,7 +20,7 @@ let gameOver;
 app.use(express.static('scripts'))
 app.use(express.static('node_modules/chess.js'))
 app.use(express.static('node_modules/@chrisoakman/chessboardjs/dist'))
-app.use(express.static('chesspieces'))
+app.use(express.static('images'))
 
 let chess = null
 let pendingMove = []
