@@ -86,6 +86,7 @@ async function moveWebhook(name, move){
     const date = new Date()
 
     const turn = chess.turn()
+    const roleID = turn === 'w' ? config.schoolB.roleID : config.schoolW.roleID
     const color1 = turn === 'w' ? schoolWColors[0] : schoolBColors[0]
     let color2 = null
     
@@ -141,6 +142,7 @@ async function moveWebhook(name, move){
     if (color2 === null) return
     requestData.url = config.schoolWebhookUrl
     requestData.formData.payload_json = JSON.stringify({
+        content: `<@&${roleID}> Your Move`,
         embeds: [{
             title: `${name}: ${pieceMap[chess.get(from).type]} ➞ ${to.toUpperCase()}`,
             color: color1,
@@ -154,23 +156,6 @@ async function moveWebhook(name, move){
     request(requestData, function (err, res) {
         if (err) console.log("School Move Webhook Error")
         else console.log(`Sent School Move Webhook: ${res.statusCode}`)
-    })
-}
-
-async function turnWebhook(){
-    const roldID = chess.turn() === 'w' ? config.schoolB.roleID : config.schoolW.roleID
-    const requestData = {
-        method: 'POST',
-        url: config.turnWebhookUrl,
-        headers: {'Content-Type': 'application/json'},
-        formData : {
-            content: `<@&${roldID}> Your Move`
-        }
-    }
-
-    request(requestData, function (err, res) {
-        if (err) console.log("Turn Notification Webhook Error")
-        else console.log(`Sent Turn Notification Webhook: ${res.statusCode}`)
     })
 }
 
@@ -330,7 +315,6 @@ async function executeMove(){
     }
 
     await moveWebhook(null, move)
-    turnWebhook()
     clearBoardCaptures()
 
     const moveResult = chess.move({from: move[0], to: move[1], promotion: 'q'})
