@@ -9,25 +9,24 @@ let moveConfirmed = false
 let votingClosed = false
 let gameOver = false
 
-function onDragStart(source, piece, position, orientation) {
-    document.body.style.overflow = 'hidden'
+function touchMove(event) {event.preventDefault()}
+function onSnapEnd() {board.position(chess.fen())}
 
+function onDragStart(source, piece, position, orientation) {
     if (chess.game_over() || votingClosed || moveConfirmed || move != null) return false
     if ((chess.turn() === 'w' && piece.search(/^b/) !== -1) || (chess.turn() === 'b' && piece.search(/^w/) !== -1)) return false
+
+    document.addEventListener('touchmove', touchMove, {passive: false})
 }
 
 function onDrop(source, target) {
-    document.body.style.overflow = 'visible'
-
     move = chess.move({
         from: source,
         to: target,
         promotion: 'q'
     })
-}
-
-function onSnapEnd() {
-    board.position(chess.fen())
+    
+    document.removeEventListener('touchmove', touchMove, {passive: false})
 }
 
 function updateStatus() {
